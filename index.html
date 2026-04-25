@@ -404,6 +404,23 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
   .courses-grid,.adv-grid,.res-grid,.vals,.hero-stats,.temario-grid,.price-grid,.frow{grid-template-columns:1fr}
 }
 .nosel{user-select:none;-webkit-user-select:none}
+    /* ── COURSE MULTI-SELECT PICKER ── */
+    .course-picker{border:2px solid var(--mid);border-radius:9px;max-height:180px;overflow-y:auto;background:var(--white)}
+    .course-picker:focus-within{border-color:var(--orange)}
+    .cp-item{display:flex;align-items:center;gap:10px;padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--mid);transition:background .15s;user-select:none}
+    .cp-item:last-child{border-bottom:none}
+    .cp-item:hover{background:var(--off)}
+    .cp-item.selected{background:rgba(11,44,77,.06)}
+    .cp-checkbox{width:18px;height:18px;border:2px solid var(--mid);border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;font-size:.7rem;color:transparent}
+    .cp-item.selected .cp-checkbox{background:var(--navy);border-color:var(--navy);color:white}
+    .cp-label{font-size:.84rem;color:var(--text);font-weight:600}
+    .cp-meta{font-size:.7rem;color:var(--muted);margin-top:1px}
+    .cp-selected-tags{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.5rem;min-height:24px}
+    .cp-tag{background:var(--navy);color:white;font-size:.7rem;font-weight:700;padding:3px 9px;border-radius:20px;display:flex;align-items:center;gap:5px}
+    .cp-tag button{background:none;border:none;color:rgba(255,255,255,.7);cursor:pointer;font-size:.8rem;line-height:1;padding:0;transition:color .15s}
+    .cp-tag button:hover{color:white}
+    .cp-empty{color:var(--muted);font-size:.78rem;font-style:italic;padding:.3rem 0}
+
     /* ── ADMIN CONFIG PANEL ─────────────────────────── */
     .admin-section-title{font-family:"Bebas Neue",sans-serif;font-size:1.3rem;color:var(--navy);letter-spacing:.5px;margin-bottom:1.2rem;display:flex;align-items:center;gap:.5rem}
     .user-table{width:100%;border-collapse:collapse;font-size:.82rem;margin-top:.5rem}
@@ -1172,9 +1189,15 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
                   </select>
                 </div>
               </div>
-              <div class="cf-group"><label>Cursos asignados</label>
-                <input id="uf-courses" placeholder="Negocio de Limpieza Rentable" />
-                <p style="font-size:.68rem;color:var(--muted);margin-top:3px">Separa múltiples cursos con coma. Debe coincidir exactamente con el nombre del curso.</p>
+              <div class="cf-group">
+                <label>Cursos asignados</label>
+                <div class="course-picker" id="uf-course-picker">
+                  <p class="cp-empty" style="padding:.6rem 1rem">Cargando cursos...</p>
+                </div>
+                <div class="cp-selected-tags" id="uf-selected-tags">
+                  <span class="cp-empty">Ningún curso seleccionado</span>
+                </div>
+                <input type="hidden" id="uf-courses" />
               </div>
               <div id="uform-err" style="display:none;background:#fef2f2;border:1px solid #fca5a5;color:#991b1b;border-radius:7px;padding:8px 10px;font-size:.78rem;margin-top:.5rem"></div>
               <div class="uform-actions">
@@ -1359,6 +1382,91 @@ function saveScriptURL(){
       notice.innerHTML='<strong>❌ Error:</strong> ' + e.message
         + '<br/><small>Verifica: 1) La URL termina en /exec &nbsp; 2) Publicada para "Cualquier usuario" &nbsp; 3) Apps Script actualizado con soporte JSONP</small>';
     });
+}
+
+// ================================================================
+// COURSE MULTI-SELECT PICKER
+// ================================================================
+let _selectedCourses = []; // array of selected course names
+
+function renderCoursePicker(preselected){
+  _selectedCourses = preselected || [];
+  const picker = document.getElementById('uf-course-picker');
+  if(!picker) return;
+
+  const courses = Object.values(CATALOG);
+  // Also include courses from COURSE_DATA not yet in CATALOG
+  const extraKeys = Object.keys(COURSE_DATA).filter(k =>
+    !courses.find(c => c.name.includes(k.split(' ')[0]))
+  );
+  extraKeys.forEach(k => courses.push({
+    id:'extra_'+k, name:COURSE_DATA[k].title||k, desc:'', icon:'📚'
+  }));
+
+  if(!courses.length){
+    picker.innerHTML='<p class="cp-empty" style="padding:.6rem 1rem">No hay cursos disponibles.</p>';
+    return;
+  }
+
+  picker.innerHTML = courses.map(c => {
+    const sel = _selectedCourses.includes(c.name);
+    return `<div class="cp-item${sel?' selected':''}" onclick="toggleCoursePicker('${c.name.replace(/'/g,"\'")}',this)">
+      <div class="cp-checkbox">${sel?'✓':''}</div>
+      <div>
+        <div class="cp-label">${c.icon||'📚'} ${c.name}</div>
+        ${c.desc?`<div class="cp-meta">${c.desc}</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+
+  updateSelectedTags();
+}
+
+function toggleCoursePicker(courseName, el){
+  const idx = _selectedCourses.indexOf(courseName);
+  if(idx === -1){
+    _selectedCourses.push(courseName);
+    el.classList.add('selected');
+    el.querySelector('.cp-checkbox').textContent = '✓';
+  } else {
+    _selectedCourses.splice(idx,1);
+    el.classList.remove('selected');
+    el.querySelector('.cp-checkbox').textContent = '';
+  }
+  updateSelectedTags();
+}
+
+function removeCourseFromPicker(courseName){
+  _selectedCourses = _selectedCourses.filter(c => c !== courseName);
+  // Also update picker checkboxes
+  document.querySelectorAll('.cp-item').forEach(item => {
+    const lbl = item.querySelector('.cp-label');
+    if(lbl && lbl.textContent.includes(courseName)){
+      item.classList.remove('selected');
+      item.querySelector('.cp-checkbox').textContent = '';
+    }
+  });
+  updateSelectedTags();
+}
+
+function updateSelectedTags(){
+  const tagsEl = document.getElementById('uf-selected-tags');
+  const hidden = document.getElementById('uf-courses');
+  if(!tagsEl) return;
+
+  if(!_selectedCourses.length){
+    tagsEl.innerHTML = '<span class="cp-empty">Ningún curso seleccionado</span>';
+    if(hidden) hidden.value = '';
+    return;
+  }
+
+  tagsEl.innerHTML = _selectedCourses.map(c =>
+    `<span class="cp-tag">${c}
+      <button type="button" onclick="removeCourseFromPicker('${c.replace(/'/g,"\'")}')">✕</button>
+    </span>`
+  ).join('');
+
+  if(hidden) hidden.value = _selectedCourses.join(', ');
 }
 
 // ── CONNECTION TEST ──
@@ -1549,20 +1657,80 @@ async function doLogin(){
 function openPortal(u){
   document.getElementById('portal').style.display='block';
   document.body.style.overflow='hidden';
-  document.getElementById('portal-user').textContent=u.name||u.email;
-  const courses=(u.courses||'').split(',').map(c=>c.trim()).filter(Boolean);
-  buildPortalTabs(courses,u.role);
-  if(u.role==='admin'){document.getElementById('admin-area').style.display='block';renderPriceGrid();renderCourseOptsList()}
+  document.getElementById('portal-user').textContent = u.name || u.email;
+
+  // ALWAYS hide admin area first — only show if actually admin
+  const adminArea = document.getElementById('admin-area');
+  adminArea.style.display = 'none';
+
+  const courses = (u.courses||'').split(',').map(c=>c.trim()).filter(Boolean);
+  buildPortalTabs(courses, u.role);
+
+  if(u.role === 'admin'){
+    adminArea.style.display = 'block';
+    renderPriceGrid();
+    renderCourseOptsList();
+    renderAdminCourseList();
+    // Render course picker with current catalog
+    renderCoursePicker([]);
+  }
 }
 function logout(){
-  // Notify server to invalidate token
+  // Invalidate session on server
   if(SCRIPT_URL && sessionToken){
-    fetch(`${SCRIPT_URL}?action=logout&token=${sessionToken}`).catch(()=>{});
+    try{ callAppsScript({action:'logout'}); }catch(e){}
   }
+  // Clear all session data
   clearSession();
-  currentUser=null;
-  document.getElementById('portal').style.display='none';
-  document.body.style.overflow='';
+  currentUser = null;
+
+  // --- Reset portal to blank state ---
+  const portal = document.getElementById('portal');
+  portal.style.display = 'none';
+  document.body.style.overflow = '';
+
+  // Reset portal header
+  document.getElementById('portal-user').textContent = 'Estudiante';
+
+  // Clear tabs and content
+  const ptabs = document.getElementById('ptabs');
+  if(ptabs) ptabs.innerHTML = '';
+  const pcontent = document.getElementById('portal-content');
+  if(pcontent) pcontent.innerHTML = '';
+
+  // Hide admin area and clear all admin sections
+  const adminArea = document.getElementById('admin-area');
+  if(adminArea){ adminArea.style.display = 'none'; }
+
+  // Reset admin tabs to default (first tab active)
+  document.querySelectorAll('#admin-tabs .atab').forEach((b,i) => {
+    b.classList.toggle('on', i===0);
+  });
+  document.querySelectorAll('.asec').forEach((s,i) => {
+    s.classList.toggle('on', i===0);
+  });
+
+  // Clear data panels
+  const wrap_ids = ['contacts-wrap','orders-wrap','users-wrap','price-grid',
+                    'admin-course-list','resources-list','course-opts-list'];
+  wrap_ids.forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.innerHTML = '<p class="empty-adm">—</p>';
+  });
+
+  // Hide all config sub-sections except users
+  document.querySelectorAll('.cfg-sec').forEach((s,i) => {
+    s.style.display = i===0 ? 'block' : 'none';
+  });
+  document.querySelectorAll('#cfg-subtabs .atab').forEach((b,i) => {
+    b.classList.toggle('on', i===0);
+  });
+
+  // Hide any open forms
+  ['user-form','new-course-form'].forEach(id => {
+    const el=document.getElementById(id);
+    if(el) el.style.display='none';
+  });
 }
 
 function buildPortalTabs(courses,role){
@@ -1969,11 +2137,15 @@ function toggleUserForm(){
   document.getElementById('uform-submit-btn').textContent='💾 Crear Usuario';
   document.getElementById('uf-name').value='';
   document.getElementById('uf-email').value='';
+  document.getElementById('uf-email').disabled=false;
   document.getElementById('uf-pass').value='';
+  document.getElementById('uf-pass').placeholder='Mínimo 8 caracteres';
   document.getElementById('uf-role').value='student';
-  document.getElementById('uf-courses').value='';
   document.getElementById('uform-err').style.display='none';
+  document.getElementById('user-form').classList.remove('editing');
+  renderCoursePicker([]);
   f.style.display = f.style.display==='none' ? 'block' : 'none';
+  if(f.style.display==='block') f.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 
 function editUser(email, name, role, courses){
@@ -1984,17 +2156,20 @@ function editUser(email, name, role, courses){
   document.getElementById('uf-email').value=email;
   document.getElementById('uf-email').disabled=true;
   document.getElementById('uf-pass').value='';
-  document.getElementById('uf-pass').placeholder='Dejar vacío para no cambiar';
+  document.getElementById('uf-pass').placeholder='Dejar vacío para no cambiar contraseña';
   document.getElementById('uf-role').value=role||'student';
-  document.getElementById('uf-courses').value=courses||'';
   document.getElementById('uform-err').style.display='none';
   document.getElementById('user-form').style.display='block';
-  document.getElementById('user-form').scrollIntoView({behavior:'smooth',block:'nearest'});
   document.getElementById('user-form').classList.add('editing');
+  // Pre-select courses in picker
+  const preselected = courses ? courses.split(',').map(c=>c.trim()).filter(Boolean) : [];
+  renderCoursePicker(preselected);
+  document.getElementById('user-form').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 
 function cancelUserForm(){
   _editingUser=null;
+  _selectedCourses=[];
   document.getElementById('user-form').style.display='none';
   document.getElementById('user-form').classList.remove('editing');
   document.getElementById('uf-email').disabled=false;
