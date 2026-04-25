@@ -941,7 +941,10 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
       <div class="fg"><label>Contraseña</label><input type="password" id="lp" placeholder="••••••••" onkeypress="if(event.key==='Enter')doLogin()"/></div>
       <div class="login-load" id="login-load">⏳ Verificando acceso...</div>
       <button class="btn-send" onclick="doLogin()" id="btn-do-login">Iniciar Sesión</button>
-      <p style="text-align:center;margin-top:.9rem;font-size:.78rem;color:var(--muted)">¿No tienes cuenta? <a href="#contacto" onclick="closeLogin()" style="color:var(--orange);font-weight:700">Contáctanos</a></p>
+      <div style="margin-top:.9rem;display:flex;align-items:center;justify-content:space-between">
+        <p style="font-size:.78rem;color:var(--muted)">¿No tienes cuenta? <a href="#contacto" onclick="closeLogin()" style="color:var(--orange);font-weight:700">Contáctanos</a></p>
+        <button onclick="testConnection()" style="background:none;border:none;color:var(--muted);font-size:.72rem;cursor:pointer;text-decoration:underline;font-family:'Nunito Sans',sans-serif">🔧 Probar conexión</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1225,6 +1228,48 @@ function saveScriptURL(){
       notice.style.color='#991b1b';
       notice.innerHTML='<strong>❌ Error:</strong> ' + e.message
         + '<br/><small>Verifica: 1) La URL termina en /exec &nbsp; 2) Publicada para "Cualquier usuario" &nbsp; 3) Apps Script actualizado con soporte JSONP</small>';
+    });
+}
+
+// ── CONNECTION TEST ──
+function testConnection() {
+  const dbg = document.getElementById('login-debug');
+  const err = document.getElementById('login-err');
+  err.style.display = 'none';
+  
+  if(!SCRIPT_URL) {
+    if(dbg){ 
+      dbg.textContent = '⚠️ Primero pega la URL del Apps Script en el campo amarillo de arriba y guárdala.';
+      dbg.style.display = 'block';
+    }
+    document.getElementById('setup-notice').style.display = 'block';
+    return;
+  }
+  
+  if(dbg){ dbg.textContent = '⏳ Probando conexión con JSONP...'; dbg.style.display='block'; }
+  
+  callAppsScript({ action: 'ping' })
+    .then(d => {
+      if(dbg){
+        if(d.ok){
+          dbg.style.background = '#f0fdf4';
+          dbg.style.borderColor = '#86efac';  
+          dbg.style.color = '#166534';
+          dbg.textContent = '✅ Conexión exitosa (v' + (d.version||'?') + '). El servidor está respondiendo correctamente. Ahora intenta iniciar sesión.';
+        } else {
+          dbg.style.background = '#fffbeb';
+          dbg.textContent = '⚠️ El servidor respondió pero con error: ' + JSON.stringify(d);
+        }
+      }
+    })
+    .catch(e => {
+      if(dbg){
+        dbg.style.background = '#fef2f2';
+        dbg.style.borderColor = '#fca5a5';
+        dbg.style.color = '#991b1b';
+        dbg.textContent = '❌ ' + e.message + ' — Solución: ve a Apps Script → Implementar → Administrar implementaciones → Nueva versión → Implementar. Asegúrate de seleccionar "Cualquier usuario" en el acceso.';
+        dbg.style.display = 'block';
+      }
     });
 }
 
