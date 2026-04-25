@@ -404,6 +404,26 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
   .courses-grid,.adv-grid,.res-grid,.vals,.hero-stats,.temario-grid,.price-grid,.frow{grid-template-columns:1fr}
 }
 .nosel{user-select:none;-webkit-user-select:none}
+    /* ── ICON UPLOAD ── */
+    .icon-upload-wrap{display:flex;align-items:center;gap:.75rem}
+    .icon-preview{width:52px;height:52px;border-radius:10px;background:var(--navy);display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0;overflow:hidden;border:2px solid var(--mid)}
+    .icon-preview img{width:100%;height:100%;object-fit:cover;border-radius:8px}
+    .icon-upload-btn{position:relative;overflow:hidden;display:inline-block}
+    .icon-upload-btn input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;font-size:100px}
+    /* Price log */
+    .plog-table{width:100%;border-collapse:collapse;font-size:.78rem;margin-top:.5rem}
+    .plog-table th{background:var(--navy);color:white;padding:8px 10px;text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;font-family:"Nunito Sans",sans-serif;font-weight:700}
+    .plog-table td{padding:8px 10px;border-bottom:1px solid var(--mid);vertical-align:middle}
+    .plog-table tr:hover td{background:#fafbff}
+    .price-up{color:#166534;font-weight:700}
+    .price-down{color:#991b1b;font-weight:700}
+    .price-same{color:var(--muted)}
+    /* Sync indicator */
+    .sync-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;vertical-align:middle}
+    .sync-dot.synced{background:#22c55e}
+    .sync-dot.unsynced{background:#f59e0b}
+    .sync-dot.syncing{background:#3b82f6;animation:blink 1.5s infinite}
+
     /* ── COURSE MULTI-SELECT PICKER ── */
     .course-picker{border:2px solid var(--mid);border-radius:9px;max-height:180px;overflow-y:auto;background:var(--white)}
     .course-picker:focus-within{border-color:var(--orange)}
@@ -516,7 +536,7 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
 <section id="hero">
   <div class="hero-inner">
     <div>
-      <div class="hero-eyebrow"><span></span> Latinos ayudando a latinos a triunfar en USA</div>
+      <div class="hero-eyebrow"><span></span> Tu negocio puede ser más rentable de lo que crees. Nosotros te enseñamos cómo.</div>
       <h1 class="hero-h1">Llega a EE.UU.<em>con oportunidades reales</em></h1>
       <p class="hero-sub">En <strong>Evolution Prime Group</strong> te damos las herramientas, el conocimiento y el acompañamiento que necesitas para construir un negocio rentable — <strong>sin experiencia previa, sin estudios</strong>.</p>
       <div class="hero-pills">
@@ -1110,6 +1130,7 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
           <button class="atab on"  onclick="aTab('contacts',this)">📋 Contactos</button>
           <button class="atab"     onclick="aTab('orders',this)">🧾 Órdenes</button>
           <button class="atab"     onclick="aTab('courses',this)">📚 Cursos</button>
+          <button class="atab"     onclick="aTab('pricelog',this)">📊 Cambios de Precio</button>
           <button class="atab"     onclick="aTab('config',this)">⚙️ Configuración</button>
         </div>
 
@@ -1152,6 +1173,13 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
           </div>
           <!-- Course list -->
           <div class="course-list-admin" id="admin-course-list"></div>
+        </div>
+
+        <!-- ── HISTORIAL DE PRECIOS ───────────── -->
+        <div class="asec" id="asec-pricelog">
+          <div class="admin-section-title">📊 Historial de Cambios de Precio</div>
+          <button class="btn-sm navy" onclick="loadPriceLog()" style="margin-bottom:.9rem">🔄 Cargar Historial</button>
+          <div id="pricelog-wrap"><p class="empty-adm">Haz clic en Cargar Historial.</p></div>
         </div>
 
         <!-- ── CONFIGURACIÓN ─────────────────── -->
@@ -1711,6 +1739,7 @@ function openPortal(u){
     renderCourseOptsList();
     renderAdminCourseList();
     renderCoursePicker([]);
+    loadCoursesFromSheet(); // Sincronizar datos desde Google Sheets
   }
 }
 function logout(){
@@ -1863,14 +1892,14 @@ function aTab(id,btn){
   btn.classList.add('on');
   const sec = document.getElementById('asec-'+id);
   if(sec){ sec.classList.add('on'); }
-  if(id==='courses') renderAdminCourseList();
+  if(id==='courses')  renderAdminCourseList();
+  if(id==='pricelog') loadPriceLog();
+  if(id==='orders')   loadOrders();
   if(id==='config'){
-    // Default to users sub-tab when entering config
     const firstCfgTab = document.querySelector('#cfg-subtabs .atab');
     if(firstCfgTab && !document.querySelector('#cfg-subtabs .atab.on'))
       cfgTab('users', firstCfgTab);
   }
-  if(id==='orders'){loadOrders();}
 }
 
 // Config sub-tab switcher
@@ -2279,21 +2308,35 @@ function renderAdminCourseList(){
       <div class="citem-body" id="cbody-${encodeURIComponent(key)}">
         <!-- Course info edit form (hidden) -->
         <div id="cedit-${encodeURIComponent(key)}" class="uform" style="display:none;margin-bottom:1rem">
-          <div class="uform-title">✏️ Editar Información del Curso</div>
+          <div class="uform-title">✏️ Editar Información del Curso &nbsp;<span class="sync-dot unsynced" id="sync-${encodeURIComponent(key)}" title="Sin guardar"></span></div>
           <div class="uform-grid">
             <div class="cf-group"><label>Título del curso</label><input id="ct-title-${encodeURIComponent(key)}" value="${c.title}"/></div>
-            <div class="cf-group"><label>Ícono</label><input id="ct-icon-${encodeURIComponent(key)}" value="${cat.icon||'📚'}" style="width:70px"/></div>
+            <div class="cf-group"><label>Descripción corta</label><input id="ct-desc-${encodeURIComponent(key)}" value="${cat.desc||''}"/></div>
+          </div>
+          <div class="cf-group">
+            <label>Ícono del curso</label>
+            <div class="icon-upload-wrap">
+              <div class="icon-preview" id="icon-prev-${encodeURIComponent(key)}">${cat.iconImg?'<img src="'+cat.iconImg+'" alt="icon"/>':(cat.icon||'📚')}</div>
+              <div>
+                <div class="icon-upload-btn">
+                  <button class="btn-sm ghost" type="button">📁 Subir imagen</button>
+                  <input type="file" accept="image/*" onchange="loadIconFile(event,'${encodeURIComponent(key)}')"/>
+                </div>
+                <p style="font-size:.68rem;color:var(--muted);margin-top:3px">PNG/JPG máx 200KB · Se guarda en Google Sheets</p>
+              </div>
+            </div>
           </div>
           <div class="uform-grid">
             <div class="cf-group"><label>Precio actual ($)</label><input type="number" id="ct-price-${encodeURIComponent(key)}" value="${cat.price||0}"/></div>
             <div class="cf-group"><label>Precio original ($)</label><input type="number" id="ct-orig-${encodeURIComponent(key)}" value="${cat.origPrice||0}"/></div>
           </div>
           <div class="uform-actions">
-            <button class="btn-sm orange" onclick="saveCourseInfo('${encodeURIComponent(key)}')">💾 Guardar</button>
+            <button class="btn-sm orange" onclick="saveCourseInfo('${encodeURIComponent(key)}')">💾 Guardar en Sheets</button>
+            <button class="btn-sm ghost" onclick="viewPriceLog('${encodeURIComponent(key)}')">📊 Historial precios</button>
             <button class="btn-sm ghost" onclick="document.getElementById('cedit-${encodeURIComponent(key)}').style.display='none'">Cancelar</button>
           </div>
-        </div>
-        <!-- Class list -->
+          <div id="plog-inline-${encodeURIComponent(key)}" style="display:none;margin-top:.75rem"></div>
+        </div>lass list -->
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.7rem">
           <span style="font-family:'Nunito Sans',sans-serif;font-weight:800;font-size:.78rem;color:var(--navy);text-transform:uppercase;letter-spacing:.5px">Clases (${c.classes.length})</span>
           <button class="btn-sm orange" onclick="openNewClass('${encodeURIComponent(key)}')">+ Nueva Clase</button>
@@ -2368,22 +2411,28 @@ function editCourseInfo(keyEnc){
   document.getElementById('chev-'+keyEnc).classList.add('open');
 }
 
-function saveCourseInfo(keyEnc){
-  const key=decodeURIComponent(keyEnc);
-  const title=document.getElementById('ct-title-'+keyEnc).value.trim();
-  const icon =document.getElementById('ct-icon-'+keyEnc).value.trim();
-  const price=parseInt(document.getElementById('ct-price-'+keyEnc).value)||0;
-  const orig =parseInt(document.getElementById('ct-orig-'+keyEnc).value)||0;
-  if(!title)return;
-  if(COURSE_DATA[key]) COURSE_DATA[key].title=title;
-  // Update catalog
-  const catKey=Object.keys(CATALOG).find(k=>CATALOG[k].name.includes(key.split(' ')[0]))||Object.keys(CATALOG)[0];
-  if(catKey&&CATALOG[catKey]){CATALOG[catKey].icon=icon;CATALOG[catKey].price=price;CATALOG[catKey].origPrice=orig;}
-  // Update price display on main page
-  const pd=document.getElementById('price-display-'+catKey);if(pd)pd.textContent='$'+price.toLocaleString();
-  const od=document.getElementById('orig-display-'+catKey);if(od)od.textContent='$'+orig.toLocaleString();
+async function saveCourseInfo(keyEnc){
+  const key   = decodeURIComponent(keyEnc);
+  const getV  = id => (document.getElementById(id)||{value:''}).value.trim();
+  const title = getV('ct-title-'+keyEnc);
+  const desc  = getV('ct-desc-'+keyEnc);
+  const price = parseInt(getV('ct-price-'+keyEnc))||0;
+  const orig  = parseInt(getV('ct-orig-'+keyEnc))||0;
+  if(!title) return;
+
+  if(COURSE_DATA[key]) COURSE_DATA[key].title = title;
+  const catKey = Object.keys(CATALOG).find(k=>CATALOG[k].name.includes(key.split(' ')[0]))||Object.keys(CATALOG)[0];
+  if(catKey && CATALOG[catKey]){
+    CATALOG[catKey].price = price; CATALOG[catKey].origPrice = orig; CATALOG[catKey].desc = desc;
+    if(_iconStore[keyEnc]) CATALOG[catKey].iconImg = _iconStore[keyEnc];
+  }
+  const pd=document.getElementById('price-display-'+catKey); if(pd)pd.textContent='$'+price.toLocaleString();
+  const od=document.getElementById('orig-display-'+catKey);  if(od)od.textContent='$'+orig.toLocaleString();
+
+  const courseId = catKey || key.toLowerCase().replace(/\s+/g,'_');
+  const saved = await saveCourseToSheet(keyEnc, courseId);
+  toast(saved ? '✅ Guardado en Google Sheets' : '✅ Actualizado localmente');
   document.getElementById('cedit-'+keyEnc).style.display='none';
-  toast('✅ Información del curso actualizada');
   renderAdminCourseList();
 }
 
@@ -2412,9 +2461,12 @@ function saveNewClass(keyEnc){
   COURSE_DATA[key].classes.push({id:newId,week,title,desc,videoId:vid,resources:[]});
   document.getElementById('newcls-'+keyEnc).classList.remove('open');
   document.getElementById('clslist-'+keyEnc).innerHTML=renderClassRows(key);
-  // Update meta count
   renderAdminCourseList();
-  toast('✅ Clase agregada: '+title);
+  const _cId1 = Object.keys(CATALOG).find(k=>CATALOG[k].name.includes(key.split(' ')[0]))||key.toLowerCase().replace(/[^a-z0-9]/g,'_');
+  const _newCls = COURSE_DATA[key].classes[COURSE_DATA[key].classes.length-1];
+  saveClassToSheet(_cId1, _newCls).then(ok=>
+    toast(ok ? '✅ Clase guardada en Sheets: '+title : '✅ Clase agregada localmente')
+  );
 }
 
 function openEditClass(keyEnc,idx){
@@ -2433,18 +2485,24 @@ function saveEditClass(keyEnc,idx){
   cls.desc    =document.getElementById('ecl-desc-'+keyEnc+'-'+idx).value.trim();
   document.getElementById('clsedit-'+keyEnc+'-'+idx).classList.remove('open');
   document.getElementById('clslist-'+keyEnc).innerHTML=renderClassRows(key);
-  toast('✅ Clase actualizada');
+  const _cId2 = Object.keys(CATALOG).find(k=>CATALOG[k].name.includes(key.split(' ')[0]))||key.toLowerCase().replace(/[^a-z0-9]/g,'_');
+  saveClassToSheet(_cId2, cls).then(ok=>
+    toast(ok ? '✅ Clase actualizada en Sheets' : '✅ Clase actualizada localmente')
+  );
 }
 
 function deleteClass(keyEnc,idx){
   const key=decodeURIComponent(keyEnc);
   if(!confirm('¿Eliminar esta clase? Esta acción no se puede deshacer.'))return;
+  const deletedCls = COURSE_DATA[key] ? COURSE_DATA[key].classes[idx] : null;
+  const deletedId  = deletedCls ? deletedCls.id : null;
   COURSE_DATA[key].classes.splice(idx,1);
-  // Re-number IDs
   COURSE_DATA[key].classes.forEach((c,i)=>c.id=i+1);
   document.getElementById('clslist-'+keyEnc).innerHTML=renderClassRows(key);
   renderAdminCourseList();
   toast('🗑️ Clase eliminada');
+  const _cId3 = Object.keys(CATALOG).find(k=>CATALOG[k].name.includes(key.split(' ')[0]))||key.toLowerCase().replace(/[^a-z0-9]/g,'_');
+  if(deletedId) deleteClassFromSheet(_cId3, deletedId);
 }
 
 function openNewCourse(){
@@ -2474,6 +2532,155 @@ function saveNewCourse(){
   });
   toast('✅ Curso creado: '+name);
   renderAdminCourseList();
+}
+
+// ================================================================
+// ICON STORE + GOOGLE SHEETS SYNC
+// ================================================================
+const _iconStore = {};
+
+function loadIconFile(event, keyEnc){
+  const file = event.target.files[0];
+  if(!file) return;
+  if(file.size > 250000){ toast('⚠️ Imagen demasiado grande. Máximo 200KB.', 'err'); return; }
+  const reader = new FileReader();
+  reader.onload = function(e){
+    const b64 = e.target.result;
+    _iconStore[keyEnc] = b64;
+    const prev = document.getElementById('icon-prev-'+keyEnc);
+    if(prev) prev.innerHTML = '<img src="'+b64+'" alt="icon" style="width:100%;height:100%;object-fit:cover;border-radius:8px"/>';
+    const dot = document.getElementById('sync-'+keyEnc);
+    if(dot){ dot.className='sync-dot unsynced'; dot.title='Cambios sin guardar'; }
+    toast('✅ Imagen cargada. Haz clic en Guardar en Sheets.');
+  };
+  reader.readAsDataURL(file);
+}
+
+async function loadCoursesFromSheet(){
+  if(!SCRIPT_URL) return;
+  try{
+    const d = await callAppsScript({action:'getCourses'});
+    if(!d || d.error) return;
+
+    (d.courses||[]).forEach(c => {
+      const key = c.name;
+      const catKey = Object.keys(CATALOG).find(k =>
+        CATALOG[k].name === c.title || CATALOG[k].name === c.name
+      ) || c.course_id;
+      if(catKey && CATALOG[catKey]){
+        CATALOG[catKey].price     = parseFloat(c.price)      || CATALOG[catKey].price;
+        CATALOG[catKey].origPrice = parseFloat(c.orig_price) || CATALOG[catKey].origPrice;
+        CATALOG[catKey].desc      = c.description || CATALOG[catKey].desc;
+        if(c.icon_b64){ CATALOG[catKey].iconImg = c.icon_b64; _iconStore[encodeURIComponent(key)] = c.icon_b64; }
+      }
+      if(!COURSE_DATA[key]) COURSE_DATA[key] = { title: c.title||key, classes:[] };
+      else COURSE_DATA[key].title = c.title || COURSE_DATA[key].title;
+    });
+
+    (d.classes||[]).forEach(cls => {
+      const courseName = Object.keys(COURSE_DATA).find(k => {
+        const ck = Object.keys(CATALOG).find(c => CATALOG[c].name.includes(k.split(' ')[0]));
+        return ck && CATALOG[ck].id === cls.course_id;
+      }) || cls.course_id;
+      if(!COURSE_DATA[courseName]) return;
+      const existing = COURSE_DATA[courseName].classes.find(c => c.id === parseInt(cls.class_id));
+      const obj = { id:parseInt(cls.class_id)||0, week:parseInt(cls.week)||1, title:cls.title||'', desc:cls.desc||'', videoId:cls.video_id||'', resources:[] };
+      if(existing) Object.assign(existing, obj);
+      else COURSE_DATA[courseName].classes.push(obj);
+      COURSE_DATA[courseName].classes.sort((a,b)=>a.id-b.id);
+    });
+
+    renderAdminCourseList();
+    renderPriceGrid();
+    Object.keys(CATALOG).forEach(k=>{
+      const pd=document.getElementById('price-display-'+k); if(pd)pd.textContent='$'+CATALOG[k].price.toLocaleString();
+      const od=document.getElementById('orig-display-'+k);  if(od)od.textContent='$'+CATALOG[k].origPrice.toLocaleString();
+    });
+  } catch(e){ console.warn('loadCoursesFromSheet:', e); }
+}
+
+async function saveCourseToSheet(keyEnc, courseId){
+  const key     = decodeURIComponent(keyEnc);
+  const getV    = id => (document.getElementById(id)||{value:''}).value?.trim()||'';
+  const title   = getV('ct-title-'+keyEnc) || (COURSE_DATA[key]||{}).title || key;
+  const desc    = getV('ct-desc-'+keyEnc)  || (Object.values(CATALOG).find(c=>c.name.includes(key.split(' ')[0]))||{}).desc||'';
+  const price   = parseInt(getV('ct-price-'+keyEnc))||0;
+  const orig    = parseInt(getV('ct-orig-'+keyEnc)) ||0;
+  const iconB64 = _iconStore[keyEnc] || (Object.values(CATALOG).find(c=>c.name.includes(key.split(' ')[0]))||{}).iconImg||'';
+
+  const dot = document.getElementById('sync-'+keyEnc);
+  if(dot){ dot.className='sync-dot syncing'; dot.title='Guardando...'; }
+  if(!SCRIPT_URL){ if(dot){dot.className='sync-dot unsynced';dot.title='Sin conexión';} return false; }
+
+  try{
+    const r = await callAppsScript({
+      action:'saveCourse', course_id:courseId, name:key,
+      title, description:desc, icon_b64:iconB64, price, orig_price:orig, active:'true'
+    });
+    if(r && r.success){
+      if(dot){ dot.className='sync-dot synced'; dot.title='Guardado en Google Sheets'; }
+      return true;
+    }
+  } catch(e){ console.warn('saveCourseToSheet:', e); }
+  if(dot){ dot.className='sync-dot unsynced'; dot.title='Error al guardar'; }
+  return false;
+}
+
+async function saveClassToSheet(courseId, cls){
+  if(!SCRIPT_URL) return false;
+  try{
+    const r = await callAppsScript({
+      action:'saveClass', course_id:courseId, class_id:cls.id,
+      week:cls.week, title:cls.title, desc:cls.desc||'', video_id:cls.videoId||''
+    });
+    return r && r.success;
+  } catch(e){ return false; }
+}
+
+async function deleteClassFromSheet(courseId, classId){
+  if(!SCRIPT_URL) return;
+  try{ await callAppsScript({action:'deleteClass', course_id:courseId, class_id:classId}); }
+  catch(e){}
+}
+
+async function viewPriceLog(keyEnc){
+  const el = document.getElementById('plog-inline-'+keyEnc);
+  if(!el) return;
+  if(el.style.display==='block'){ el.style.display='none'; return; }
+  el.style.display='block';
+  el.innerHTML='<p style="color:var(--muted);font-size:.78rem;padding:.4rem 0">⏳ Cargando historial...</p>';
+  if(!SCRIPT_URL){ el.innerHTML='<p style="color:var(--muted);font-size:.78rem">Sin conexión al servidor.</p>'; return; }
+  try{
+    const key = decodeURIComponent(keyEnc);
+    const d = await callAppsScript({action:'getPriceLog'});
+    const logs = (d.logs||[]).filter(l=>(l[2]||'').toString().includes(key.split(' ')[0])||(l[3]||'').includes(key.split(' ')[0]));
+    if(!logs.length){ el.innerHTML='<p style="color:var(--muted);font-size:.78rem;font-style:italic">Sin cambios de precio registrados.</p>'; return; }
+    el.innerHTML=`<div style="overflow-x:auto;margin-top:.5rem">
+      <p style="font-family:'Nunito Sans',sans-serif;font-weight:800;font-size:.72rem;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.4rem">Historial de cambios</p>
+      <table class="plog-table"><thead><tr><th>Fecha</th><th>Usuario</th><th>Precio ant.</th><th>Precio nuevo</th><th>Orig ant.</th><th>Orig nuevo</th></tr></thead>
+      <tbody>${logs.map(l=>{
+        const cls = (l[5]||0)>(l[4]||0)?'price-up':(l[5]||0)<(l[4]||0)?'price-down':'price-same';
+        return '<tr><td style="white-space:nowrap;font-size:.7rem">'+l[0]+'</td><td style="font-size:.7rem">'+l[1]+'</td><td>$'+(l[4]||0).toLocaleString()+'</td><td class="'+cls+'">$'+(l[5]||0).toLocaleString()+'</td><td style="color:var(--muted)">$'+(l[6]||0).toLocaleString()+'</td><td style="color:var(--muted)">$'+(l[7]||0).toLocaleString()+'</td></tr>';
+      }).join('')}</tbody></table></div>`;
+  } catch(e){ el.innerHTML='<p style="color:#991b1b;font-size:.78rem">Error: '+e.message+'</p>'; }
+}
+
+async function loadPriceLog(){
+  const w = document.getElementById('pricelog-wrap');
+  if(!w) return;
+  w.innerHTML='<p class="empty-adm">⏳ Cargando...</p>';
+  if(!SCRIPT_URL){ w.innerHTML='<p class="empty-adm">⚠️ Configura el SCRIPT_URL primero.</p>'; return; }
+  try{
+    const d = await callAppsScript({action:'getPriceLog'});
+    const logs = d.logs||[];
+    if(!logs.length){ w.innerHTML='<p class="empty-adm">Sin cambios de precio registrados aún.</p>'; return; }
+    w.innerHTML=`<div style="overflow-x:auto">
+      <table class="plog-table"><thead><tr><th>Fecha y Hora</th><th>Usuario</th><th>Curso</th><th>Precio Ant.</th><th>Precio Nuevo</th><th>Orig. Ant.</th><th>Orig. Nuevo</th></tr></thead>
+      <tbody>${logs.map(l=>{
+        const cls=(l[5]||0)>(l[4]||0)?'price-up':(l[5]||0)<(l[4]||0)?'price-down':'price-same';
+        return '<tr><td style="white-space:nowrap;font-size:.72rem">'+(l[0]||'')+'</td><td style="font-size:.72rem">'+(l[1]||'')+'</td><td style="font-weight:700">'+(l[3]||l[2]||'')+'</td><td>$'+(l[4]||0).toLocaleString()+'</td><td class="'+cls+'">$'+(l[5]||0).toLocaleString()+((l[5]||0)>(l[4]||0)?' ▲':(l[5]||0)<(l[4]||0)?' ▼':' =')+'</td><td style="color:var(--muted)">$'+(l[6]||0).toLocaleString()+'</td><td style="color:var(--muted)">$'+(l[7]||0).toLocaleString()+'</td></tr>';
+      }).join('')}</tbody></table></div>`;
+  } catch(e){ w.innerHTML='<p style="color:#991b1b;font-size:.82rem">Error: '+e.message+'</p>'; }
 }
 
 // ── INIT ──
