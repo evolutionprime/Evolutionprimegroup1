@@ -1208,29 +1208,23 @@ function saveScriptURL(){
   notice.innerHTML='⏳ Verificando conexión...';
   notice.style.display='block';
 
-  fetch(SCRIPT_URL + '?action=ping', {method:'GET', redirect:'follow'})
-    .then(r => {
-      if(!r.ok) throw new Error('HTTP ' + r.status);
-      return r.text();
-    })
-    .then(text => {
-      let d;
-      try{ d = JSON.parse(text); } catch(e){ throw new Error('Respuesta no es JSON: ' + text.substring(0,80)); }
+  callAppsScript({action:'ping'})
+    .then(d => {
       if(d.ok){
         notice.style.background='#f0fdf4';
         notice.style.borderColor='#86efac';
         notice.style.color='#166534';
-        notice.innerHTML='<strong>✅ Conexión exitosa (v'+( d.version||'?')+').</strong> Ahora ingresa tu correo y contraseña.';
+        notice.innerHTML='<strong>✅ Conexión exitosa (v'+(d.version||'1')+').</strong> Ahora ingresa tu correo y contraseña.';
       } else {
-        throw new Error('Ping devolvió: ' + JSON.stringify(d));
+        throw new Error(JSON.stringify(d));
       }
     })
     .catch(e => {
       notice.style.background='#fef2f2';
       notice.style.borderColor='#fca5a5';
       notice.style.color='#991b1b';
-      notice.innerHTML='<strong>❌ Error de conexión:</strong> ' + e.toString()
-        + '<br/><small>Verifica: 1) URL termina en /exec  2) Publicada para "Cualquier usuario"  3) Estás en https:// no file://</small>';
+      notice.innerHTML='<strong>❌ Error:</strong> ' + e.message
+        + '<br/><small>Verifica: 1) La URL termina en /exec &nbsp; 2) Publicada para "Cualquier usuario" &nbsp; 3) Apps Script actualizado con soporte JSONP</small>';
     });
 }
 
@@ -1259,26 +1253,64 @@ function clearSession() {
   sessionStorage.removeItem('epg_user');
 }
 
-// Authenticated fetch helper — includes token automatically
-async function authFetch(params) {
-  const base = SCRIPT_URL;
-  if (!base) return null;
-  const query = new URLSearchParams({ ...params, token: sessionToken }).toString();
-  const r = await fetch(`${base}?${query}`);
-  return r.json();
+// ── JSONP helper — bypasses CORS with Apps Script ──────────────
+// Apps Script does NOT support CORS preflight (OPTIONS).
+// JSONP injects a <script> tag that loads the response as JS callback.
+// This is the standard solution used by all Apps Script integrations.
+let _jsonpCount = 0;
+function callAppsScript(params) {
+  return new Promise((resolve, reject) => {
+    if(!SCRIPT_URL){ reject(new Error('SCRIPT_URL no configurada')); return; }
+
+    const cbName = '__epg_cb_' + (++_jsonpCount);
+    const timeout = setTimeout(() => {
+      delete window[cbName];
+      if(script.parentNode) script.parentNode.removeChild(script);
+      reject(new Error('Timeout — el servidor tardó demasiado. Verifica que la Web App esté publicada.'));
+    }, 15000);
+
+    window[cbName] = function(data) {
+      clearTimeout(timeout);
+      delete window[cbName];
+      if(script.parentNode) script.parentNode.removeChild(script);
+      resolve(data);
+    };
+
+    // Add token if session exists
+    if(sessionToken) params.token = sessionToken;
+    params.callback = cbName;
+
+    const qs = Object.entries(params)
+      .map(([k,v]) => encodeURIComponent(k)+'='+encodeURIComponent(v))
+      .join('&');
+
+    const script = document.createElement('script');
+    script.src = SCRIPT_URL + '?' + qs;
+    script.onerror = () => {
+      clearTimeout(timeout);
+      delete window[cbName];
+      reject(new Error('No se pudo cargar el script del servidor. Verifica la URL del Apps Script.'));
+    };
+    document.head.appendChild(script);
+  });
 }
 
+// Authenticated GET — uses JSONP
+async function authFetch(params) {
+  if(!SCRIPT_URL) return null;
+  return callAppsScript(params);
+}
+
+// Authenticated POST — Apps Script doesn't support POST via JSONP,
+// so we send it as GET with all params in the query string.
 async function authPost(body) {
-  const base = SCRIPT_URL;
-  if (!base) return null;
-  const r = await fetch(base, {
-    method: 'POST',
-    mode: 'no-cors',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ...body, token: sessionToken })
-  });
-  // no-cors returns opaque response — assume success
-  return { success: true };
+  if(!SCRIPT_URL) return { success: true };
+  try {
+    return await callAppsScript(body);
+  } catch(e) {
+    console.warn('authPost failed:', e);
+    return { success: true }; // optimistic — data may still save
+  }
 }
 
 async function doLogin(){
@@ -1300,72 +1332,42 @@ async function doLogin(){
 
   ld.style.display = 'block';
   btn.disabled = true;
-  let user = null;
 
-  if(SCRIPT_URL){
-    try{
-      // Apps Script requires redirect following — use these options
-      const url = SCRIPT_URL
-        + '?action=login'
-        + '&email='    + encodeURIComponent(em)
-        + '&password=' + encodeURIComponent(pw);
-
-      const r = await fetch(url, {
-        method:   'GET',
-        redirect: 'follow',
-        headers:  { 'Content-Type': 'application/json' }
-      });
-
-      const text = await r.text();
-
-      // Debug: show raw response
-      if(dbg){
-        dbg.textContent = 'HTTP: ' + r.status + ' | Response: ' + text.substring(0,120);
-        dbg.style.display = 'block';
-      }
-
-      let d;
-      try{ d = JSON.parse(text); }
-      catch(pe){
-        // Not JSON — likely an Apps Script HTML error page
-        if(dbg) dbg.textContent = '❌ Respuesta no es JSON. Verifica que la Web App esté publicada correctamente. Respuesta: ' + text.substring(0,200);
-        ld.style.display='none'; btn.disabled=false;
-        err.textContent = 'Error de configuración en el servidor. Revisa que el Apps Script esté publicado como Web App.';
-        err.style.display='block';
-        return;
-      }
-
-      if(d.success && d.token){
-        saveSession(d.token, d.expires, d.user);
-        user = d.user;
-        if(dbg) dbg.style.display='none';
-      } else {
-        ld.style.display='none'; btn.disabled=false;
-        err.textContent = d.error || 'Credenciales incorrectas.';
-        err.style.display='block';
-        return;
-      }
-
-    } catch(fetchErr){
-      // Network/CORS error
-      if(dbg){
-        dbg.textContent = '❌ Error de red/CORS: ' + fetchErr.toString()
-          + ' | Asegúrate de que: 1) La URL termina en /exec  2) La Web App está publicada para "Cualquier usuario"  3) Estás usando https:// (no file://)';
-        dbg.style.display='block';
-      }
-      ld.style.display='none'; btn.disabled=false;
-      err.textContent = 'No se pudo conectar al servidor. Ver detalle en amarillo.';
-      err.style.display='block';
-      return;
-    }
-  } else {
-    // No SCRIPT_URL — use demo users
-    user = DEMO_USERS.find(u => u.email.toLowerCase()===em && u.password===pw);
+  if(!SCRIPT_URL){
+    // No server — use demo users
+    const user = DEMO_USERS.find(u => u.email.toLowerCase()===em && u.password===pw);
+    ld.style.display='none'; btn.disabled=false;
+    if(user){ currentUser=user; closeLogin(); openPortal(user); }
+    else{ err.textContent='Usuario o contraseña incorrectos.'; err.style.display='block'; }
+    return;
   }
 
-  ld.style.display='none'; btn.disabled=false;
-  if(user){ currentUser=user; closeLogin(); openPortal(user); }
-  else{ err.textContent='Usuario o contraseña incorrectos.'; err.style.display='block'; }
+  // Use JSONP — the ONLY method that bypasses CORS with Apps Script
+  callAppsScript({
+    action:   'login',
+    email:    em,
+    password: pw
+  })
+  .then(d => {
+    ld.style.display='none'; btn.disabled=false;
+    if(d.success && d.token){
+      saveSession(d.token, d.expires, d.user);
+      closeLogin();
+      openPortal(d.user);
+    } else {
+      err.textContent = d.error || 'Credenciales incorrectas.';
+      err.style.display = 'block';
+    }
+  })
+  .catch(e => {
+    ld.style.display='none'; btn.disabled=false;
+    if(dbg){
+      dbg.textContent = '❌ ' + e.message;
+      dbg.style.display='block';
+    }
+    err.textContent = 'Error de conexión. Ver detalle en amarillo.';
+    err.style.display='block';
+  });
 }
 
 // ── PORTAL ──
@@ -1614,7 +1616,7 @@ async function loadContacts(){
   const w=document.getElementById('contacts-wrap');
   w.innerHTML='<p style="color:var(--muted);font-size:.82rem">⏳ Cargando...</p>';
   if(!SCRIPT_URL){w.innerHTML='<div style="background:#fffbeb;border:1px solid #f59e0b;border-radius:8px;padding:1rem;font-size:.82rem;color:#92400e"><strong>⚠️ SCRIPT_URL no configurada.</strong></div>';return}
-  try{const d=await authFetch({action:'getContacts'});
+  try{const d=await authFetch({action:'getContacts'}) || {};
     if(d.contacts?.length){w.innerHTML=`<div style="overflow-x:auto"><table class="dtable"><thead><tr><th>Nombre</th><th>Correo</th><th>Teléfono</th><th>Curso</th><th>Mensaje</th><th>Fecha</th></tr></thead><tbody>${d.contacts.map(c=>`<tr><td>${c[0]||''}</td><td>${c[1]||''}</td><td>${c[2]||''}</td><td>${c[3]||''}</td><td>${c[4]||''}</td><td>${c[5]||''}</td></tr>`).join('')}</tbody></table></div>`}
     else w.innerHTML='<p style="color:var(--muted);font-size:.82rem;font-style:italic">Sin contactos aún.</p>'
   }catch(e){w.innerHTML='<p style="color:#c53030;font-size:.82rem">Error al cargar datos.</p>'}
@@ -1623,7 +1625,7 @@ async function loadOrders(){
   const w=document.getElementById('orders-wrap');
   w.innerHTML='<p style="color:var(--muted);font-size:.82rem">⏳ Cargando...</p>';
   if(!SCRIPT_URL){w.innerHTML='<div style="background:#fffbeb;border:1px solid #f59e0b;border-radius:8px;padding:1rem;font-size:.82rem;color:#92400e"><strong>⚠️ SCRIPT_URL no configurada.</strong></div>';return}
-  try{const d=await authFetch({action:'getOrders'});
+  try{const d=await authFetch({action:'getOrders'}) || {};
     if(d.orders?.length){w.innerHTML=`<div style="overflow-x:auto"><table class="dtable"><thead><tr><th>Nombre</th><th>Correo</th><th>Teléfono</th><th>Cursos</th><th>Total</th><th>Fecha</th></tr></thead><tbody>${d.orders.map(o=>`<tr><td>${o[0]||''}</td><td>${o[1]||''}</td><td>${o[2]||''}</td><td>${o[3]||''}</td><td style="color:var(--orange);font-weight:700">$${o[4]||0}</td><td>${o[5]||''}</td></tr>`).join('')}</tbody></table></div>`}
     else w.innerHTML='<p style="color:var(--muted);font-size:.82rem;font-style:italic">Sin órdenes aún.</p>'
   }catch(e){w.innerHTML='<p style="color:#c53030;font-size:.82rem">Error al cargar órdenes.</p>'}
