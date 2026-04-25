@@ -1512,8 +1512,8 @@ function testConnection() {
 }
 
 // ── SESSION TOKEN STORAGE ──
-let sessionToken = sessionStorage.getItem('epg_token') || '';
-let sessionExpires = sessionStorage.getItem('epg_expires') || '';
+let sessionToken = localStorage.getItem('epg_token') || '';
+let sessionExpires = localStorage.getItem('epg_expires') || '';
 
 function isSessionValid() {
   if (!sessionToken || !sessionExpires) return false;
@@ -1523,17 +1523,17 @@ function isSessionValid() {
 function saveSession(token, expires, user) {
   sessionToken = token;
   sessionExpires = expires;
-  sessionStorage.setItem('epg_token', token);
-  sessionStorage.setItem('epg_expires', expires);
-  sessionStorage.setItem('epg_user', JSON.stringify(user));
+  localStorage.setItem('epg_token', token);
+  localStorage.setItem('epg_expires', expires);
+  localStorage.setItem('epg_user', JSON.stringify(user));
 }
 
 function clearSession() {
   sessionToken = '';
   sessionExpires = '';
-  sessionStorage.removeItem('epg_token');
-  sessionStorage.removeItem('epg_expires');
-  sessionStorage.removeItem('epg_user');
+  localStorage.removeItem('epg_token');
+  localStorage.removeItem('epg_expires');
+  localStorage.removeItem('epg_user');
 }
 
 // ── JSONP helper — bypasses CORS with Apps Script ──────────────
@@ -1654,24 +1654,62 @@ async function doLogin(){
 }
 
 // ── PORTAL ──
-function openPortal(u){
-  document.getElementById('portal').style.display='block';
-  document.body.style.overflow='hidden';
-  document.getElementById('portal-user').textContent = u.name || u.email;
+function resetPortalUI(){
+  // ── Wipe all portal state before loading a new user ──
+  // Tabs & content
+  const ptabs = document.getElementById('ptabs');
+  if(ptabs) ptabs.innerHTML = '';
+  const pcontent = document.getElementById('portal-content');
+  if(pcontent) pcontent.innerHTML = '';
 
-  // ALWAYS hide admin area first — only show if actually admin
+  // Admin area — always hidden until confirmed admin
   const adminArea = document.getElementById('admin-area');
-  adminArea.style.display = 'none';
+  if(adminArea) adminArea.style.display = 'none';
+
+  // Reset admin tabs to first tab
+  document.querySelectorAll('#admin-tabs .atab').forEach((b,i) => b.classList.toggle('on', i===0));
+  document.querySelectorAll('.asec').forEach((s,i) => s.classList.toggle('on', i===0));
+
+  // Clear all data panels
+  ['contacts-wrap','orders-wrap','users-wrap','price-grid',
+   'admin-course-list','resources-list','course-opts-list'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.innerHTML = '';
+  });
+
+  // Reset config sub-tabs to users
+  document.querySelectorAll('.cfg-sec').forEach((s,i) => s.style.display = i===0 ? 'block' : 'none');
+  document.querySelectorAll('#cfg-subtabs .atab').forEach((b,i) => b.classList.toggle('on', i===0));
+
+  // Hide open forms
+  ['user-form','new-course-form'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el){ el.style.display='none'; el.classList.remove('editing'); }
+  });
+
+  // Reset course picker state
+  _selectedCourses = [];
+}
+
+function openPortal(u){
+  // Full reset before loading — prevents stale data from previous session
+  resetPortalUI();
+
+  currentUser = u;
+  document.getElementById('portal').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+  document.getElementById('portal-user').textContent = u.name || u.email;
 
   const courses = (u.courses||'').split(',').map(c=>c.trim()).filter(Boolean);
   buildPortalTabs(courses, u.role);
 
+  // Admin panel — only for admins
   if(u.role === 'admin'){
+    const adminArea = document.getElementById('admin-area');
     adminArea.style.display = 'block';
     renderPriceGrid();
     renderCourseOptsList();
     renderAdminCourseList();
-    // Render course picker with current catalog
     renderCoursePicker([]);
   }
 }
@@ -1684,53 +1722,11 @@ function logout(){
   clearSession();
   currentUser = null;
 
-  // --- Reset portal to blank state ---
-  const portal = document.getElementById('portal');
-  portal.style.display = 'none';
-  document.body.style.overflow = '';
-
-  // Reset portal header
+  // Full UI reset via shared function
+  resetPortalUI();
   document.getElementById('portal-user').textContent = 'Estudiante';
-
-  // Clear tabs and content
-  const ptabs = document.getElementById('ptabs');
-  if(ptabs) ptabs.innerHTML = '';
-  const pcontent = document.getElementById('portal-content');
-  if(pcontent) pcontent.innerHTML = '';
-
-  // Hide admin area and clear all admin sections
-  const adminArea = document.getElementById('admin-area');
-  if(adminArea){ adminArea.style.display = 'none'; }
-
-  // Reset admin tabs to default (first tab active)
-  document.querySelectorAll('#admin-tabs .atab').forEach((b,i) => {
-    b.classList.toggle('on', i===0);
-  });
-  document.querySelectorAll('.asec').forEach((s,i) => {
-    s.classList.toggle('on', i===0);
-  });
-
-  // Clear data panels
-  const wrap_ids = ['contacts-wrap','orders-wrap','users-wrap','price-grid',
-                    'admin-course-list','resources-list','course-opts-list'];
-  wrap_ids.forEach(id => {
-    const el = document.getElementById(id);
-    if(el) el.innerHTML = '<p class="empty-adm">—</p>';
-  });
-
-  // Hide all config sub-sections except users
-  document.querySelectorAll('.cfg-sec').forEach((s,i) => {
-    s.style.display = i===0 ? 'block' : 'none';
-  });
-  document.querySelectorAll('#cfg-subtabs .atab').forEach((b,i) => {
-    b.classList.toggle('on', i===0);
-  });
-
-  // Hide any open forms
-  ['user-form','new-course-form'].forEach(id => {
-    const el=document.getElementById(id);
-    if(el) el.style.display='none';
-  });
+  document.getElementById('portal').style.display = 'none';
+  document.body.style.overflow = '';
 }
 
 function buildPortalTabs(courses,role){
@@ -2484,6 +2480,24 @@ function saveNewCourse(){
 document.getElementById('login-modal').addEventListener('click',function(e){if(e.target===this)closeLogin()});
 document.getElementById('co-modal').addEventListener('click',function(e){if(e.target===this)closeCheckout()});
 document.getElementById('portal').addEventListener('contextmenu',e=>e.preventDefault());
+
+// ── AUTO-RESTORE SESSION (survives page refresh) ──────────────
+(function restoreSession(){
+  if(!isSessionValid()) return; // No valid session in localStorage
+
+  const savedUser = localStorage.getItem('epg_user');
+  if(!savedUser) return;
+
+  try {
+    const user = JSON.parse(savedUser);
+    currentUser = user;
+    // Silently restore portal without showing login modal
+    openPortal(user);
+  } catch(e) {
+    // Invalid saved data — clear it
+    clearSession();
+  }
+})();
 </script>
 </body>
 </html>
