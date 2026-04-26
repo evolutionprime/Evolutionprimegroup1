@@ -652,78 +652,12 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
     <h2 class="sh2">Nuestros <em>Cursos Disponibles</em></h2>
     <p class="ssub">Programas diseñados para emprendedores hispanos en EE.UU. — de cero a rentable, paso a paso.</p>
     <div class="courses-grid" id="courses-grid">
-      <!-- COURSE 1: LIMPIEZA (active) -->
-      <div class="course-card">
-        <div class="cc-top">
-          <div class="cc-icon-wrap">
-            <!-- Cleaning icon -->
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M3 21l3-3M6 18l12-12a2.83 2.83 0 00-4-4L2 14" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M17.5 6.5L20 9" stroke="#F7941D" stroke-width="2" stroke-linecap="round"/><circle cx="19" cy="5" r="2" stroke="#F7941D" stroke-width="1.5"/></svg>
-          </div>
-          <span class="cc-badge">⭐ Disponible Ahora</span>
-          <div class="cc-title">Negocio de Limpieza Rentable en EE.UU.</div>
-        </div>
-        <div class="cc-body">
-          <p class="cc-desc">Sistema completo de 6 semanas para iniciar, operar y escalar un negocio de limpieza profesional en cualquier estado de los EE.UU. Clases en vivo, software incluido.</p>
-          <ul class="cc-features">
-            <li>Cómo conseguir clientes desde la semana 1</li>
-            <li>Fijar precios rentables y competitivos</li>
-            <li>Manejar equipos con procesos claros</li>
-            <li>Control total con software especializado</li>
-            <li>Válido en los 50 estados de EE.UU.</li>
-          </ul>
-          <div class="cc-price">
-            <span class="cur" id="price-display-limpieza">$997</span>
-            <span class="orig" id="orig-display-limpieza">$1,497</span>
-            <span class="disc">33% OFF</span>
-          </div>
-          <button class="btn-cc" id="btn-limpieza" onclick="addToCart('limpieza')">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" stroke="white" stroke-width="2" stroke-linejoin="round"/><line x1="3" y1="6" x2="21" y2="6" stroke="white" stroke-width="2"/><path d="M16 10a4 4 0 01-8 0" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
-            Agregar al Carrito
-          </button>
-        </div>
+      <!-- Cursos cargados dinámicamente desde Google Sheets -->
+      <div style="grid-column:1/-1;text-align:center;padding:3rem 1rem;color:var(--muted)">
+        <div style="font-size:2rem;margin-bottom:.75rem">⏳</div>
+        <p style="font-size:.9rem">Cargando cursos disponibles...</p>
       </div>
-      <!-- COURSE 2: PRÓXIMO -->
-      <div class="course-card course-coming">
-        <div class="cc-top">
-          <div class="cc-icon-wrap">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" stroke="white" stroke-width="2" stroke-linejoin="round"/><polyline points="9 22 9 12 15 12 15 22" stroke="white" stroke-width="2" stroke-linejoin="round"/></svg>
-          </div>
-          <span class="cc-badge" style="background:rgba(255,255,255,.2)">🔜 Próximamente</span>
-          <div class="cc-title">Negocio de Mantenimiento y Reparaciones</div>
-        </div>
-        <div class="cc-body">
-          <p class="cc-desc">Aprende a ofrecer servicios de mantenimiento del hogar, pequeñas reparaciones y handyman services — una industria de alta demanda en EE.UU.</p>
-          <ul class="cc-features">
-            <li>Servicios más demandados por propietarios</li>
-            <li>Cómo cotizar y cobrar correctamente</li>
-            <li>Marketing local para handymen</li>
-            <li>Licencias y seguros requeridos</li>
-          </ul>
-          <div class="cc-soon">🔔 Notifícame cuando esté disponible</div>
-          <button class="btn-cc" onclick="notifyMe('mantenimiento')" style="background:var(--muted)">Avisarme cuando esté listo</button>
-        </div>
-      </div>
-      <!-- COURSE 3: PRÓXIMO -->
-      <div class="course-card course-coming">
-        <div class="cc-top">
-          <div class="cc-icon-wrap">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><rect x="2" y="3" width="20" height="14" rx="2" ry="2" stroke="white" stroke-width="2"/><line x1="8" y1="21" x2="16" y2="21" stroke="white" stroke-width="2"/><line x1="12" y1="17" x2="12" y2="21" stroke="white" stroke-width="2"/></svg>
-          </div>
-          <span class="cc-badge" style="background:rgba(255,255,255,.2)">🔜 Próximamente</span>
-          <div class="cc-title">Negocio Digital y E-Commerce en EE.UU.</div>
-        </div>
-        <div class="cc-body">
-          <p class="cc-desc">Construye un negocio digital desde cero — tienda en línea, dropshipping, y ventas por Amazon o eBay. Todo sin necesidad de inventario propio.</p>
-          <ul class="cc-features">
-            <li>Modelos de negocio digital más rentables</li>
-            <li>Cómo vender en Amazon FBA</li>
-            <li>Marketing digital básico</li>
-            <li>Estructura legal para negocios online</li>
-          </ul>
-          <div class="cc-soon">🔔 Notifícame cuando esté disponible</div>
-          <button class="btn-cc" onclick="notifyMe('digital')" style="background:var(--muted)">Avisarme cuando esté listo</button>
-        </div>
-      </div>
+    </div>
     </div>
   </div>
 </section>
@@ -1321,39 +1255,21 @@ if(location.protocol === 'file:'){
 let SCRIPT_URL = localStorage.getItem('epg_script_url') || '';
 
 // Demo users — replaced by live sheet when SCRIPT_URL is set
-const DEMO_USERS=[
-  {email:'admin@evolutionprime.com',password:'Admin2025!',name:'Administrador',role:'admin',courses:'Negocio de Limpieza Rentable'},
-  {email:'estudiante@demo.com',password:'Demo123!',name:'Juan Pérez',role:'student',courses:'Negocio de Limpieza Rentable'}
-];
+// DEMO_USERS — solo para pruebas locales sin SCRIPT_URL configurada
+// En producción, TODA la autenticación va al Google Sheet
+const DEMO_USERS=[];
 
-const COURSE_DATA={
-  'Negocio de Limpieza Rentable':{
-    title:'Negocio de Limpieza Rentable en EE.UU.',
-    classes:[
-      {id:1,week:1,title:'Introducción al Negocio de Limpieza',desc:'Visión general del mercado, oportunidades y estructura del programa.',videoId:'',resources:[]},
-      {id:2,week:1,title:'Formalización: LLC, Licencias y Seguros',desc:'Cómo registrar legalmente tu empresa en EE.UU.',videoId:'',resources:[]},
-      {id:3,week:2,title:'Estrategia de Marketing Local',desc:'Google Business, redes sociales y referidos.',videoId:'',resources:[]},
-      {id:4,week:2,title:'Proceso de Cotización y Cierre',desc:'Scripts de ventas y presentación profesional.',videoId:'',resources:[]},
-      {id:5,week:3,title:'Cálculo de Costos y Fijación de Precios',desc:'Metodología para precios rentables y competitivos.',videoId:'',resources:[]},
-      {id:6,week:3,title:'Control Financiero del Negocio',desc:'Ingresos, gastos, facturación y flujo de caja.',videoId:'',resources:[]},
-      {id:7,week:4,title:'Procesos Operativos y Checklists',desc:'Estandarización para calidad consistente.',videoId:'',resources:[]},
-      {id:8,week:4,title:'Gestión de Materiales y Equipos',desc:'Inventario, compras eficientes y mantenimiento.',videoId:'',resources:[]},
-      {id:9,week:5,title:'Contratación y Entrenamiento del Equipo',desc:'Encontrar, contratar y capacitar personal confiable.',videoId:'',resources:[]},
-      {id:10,week:5,title:'Liderazgo y Delegación Efectiva',desc:'Gestiona tu equipo sin estar en cada trabajo.',videoId:'',resources:[]},
-      {id:11,week:6,title:'Software de Gestión de Limpieza',desc:'Implementación y uso del software del programa.',videoId:'',resources:[]},
-      {id:12,week:6,title:'Plan de Crecimiento a 6 y 12 Meses',desc:'Estrategia para escalar sosteniblemente.',videoId:'',resources:[]},
-    ]
-  }
-};
+// COURSE_DATA — se carga desde Google Sheets al iniciar sesión como admin
+// o al abrir el portal de estudiante
+let COURSE_DATA={};
 
-const CATALOG={
-  limpieza:{id:'limpieza',name:'Negocio de Limpieza Rentable en EE.UU.',desc:'6 semanas · Clases en vivo · Software incluido',icon:'🧹',price:997,origPrice:1497}
-};
+// CATALOG — se carga desde Google Sheets al iniciar sesión
+let CATALOG={};
 
 let currentUser=null, cart=[], stripeInst=null, stripeCard=null;
 let stripePK=localStorage.getItem('epg_spk')||'';
 let liveLinkEnc=localStorage.getItem('epg_live')||btoa('https://zoom.us/j/CONFIGURAR');
-let courseOpts=['Negocio de Limpieza Rentable en EE.UU.','Negocio de Mantenimiento (próximamente)','Negocio Digital / E-Commerce (próximamente)','Consultoría Individual'];
+let courseOpts=[] // Se carga desde Google Sheets;
 let driveResources={};// {classId:[{type,name,url}]}
 
 // ── LOGIN ──
@@ -1728,18 +1644,28 @@ function openPortal(u){
   document.body.style.overflow = 'hidden';
   document.getElementById('portal-user').textContent = u.name || u.email;
 
-  const courses = (u.courses||'').split(',').map(c=>c.trim()).filter(Boolean);
-  buildPortalTabs(courses, u.role);
+  const userCourseKeys = (u.courses||'').split(',').map(c=>c.trim()).filter(Boolean);
 
-  // Admin panel — only for admins
   if(u.role === 'admin'){
     const adminArea = document.getElementById('admin-area');
     adminArea.style.display = 'block';
-    renderPriceGrid();
-    renderCourseOptsList();
-    renderAdminCourseList();
-    renderCoursePicker([]);
-    loadCoursesFromSheet(); // Sincronizar datos desde Google Sheets
+    // Load from Sheets first, then build tabs
+    loadCoursesFromSheet().then(()=>{
+      buildPortalTabs(userCourseKeys, u.role);
+      renderPriceGrid();
+      renderCourseOptsList();
+      renderAdminCourseList();
+      renderCoursePicker([]);
+    });
+  } else {
+    // Student: load course data from Sheets, then show their courses
+    if(SCRIPT_URL){
+      loadCoursesFromSheet().then(()=>{
+        buildPortalTabs(userCourseKeys, u.role);
+      });
+    } else {
+      buildPortalTabs(userCourseKeys, u.role);
+    }
   }
 }
 function logout(){
@@ -2557,47 +2483,146 @@ function loadIconFile(event, keyEnc){
 }
 
 async function loadCoursesFromSheet(){
-  if(!SCRIPT_URL) return;
+  if(!SCRIPT_URL){
+    // No server: show placeholder on public page
+    renderCoursesGrid([]);
+    return;
+  }
   try{
     const d = await callAppsScript({action:'getCourses'});
-    if(!d || d.error) return;
+    if(!d || d.error){
+      console.warn('loadCoursesFromSheet error:', d?.error);
+      renderCoursesGrid([]);
+      return;
+    }
 
+    // ── Build CATALOG from Sheets data ──────────────────────────
+    CATALOG = {};
     (d.courses||[]).forEach(c => {
-      const key = c.name;
-      const catKey = Object.keys(CATALOG).find(k =>
-        CATALOG[k].name === c.title || CATALOG[k].name === c.name
-      ) || c.course_id;
-      if(catKey && CATALOG[catKey]){
-        CATALOG[catKey].price     = parseFloat(c.price)      || CATALOG[catKey].price;
-        CATALOG[catKey].origPrice = parseFloat(c.orig_price) || CATALOG[catKey].origPrice;
-        CATALOG[catKey].desc      = c.description || CATALOG[catKey].desc;
-        if(c.icon_b64){ CATALOG[catKey].iconImg = c.icon_b64; _iconStore[encodeURIComponent(key)] = c.icon_b64; }
-      }
-      if(!COURSE_DATA[key]) COURSE_DATA[key] = { title: c.title||key, classes:[] };
-      else COURSE_DATA[key].title = c.title || COURSE_DATA[key].title;
+      if(String(c.active).toLowerCase()==='false') return; // skip inactive
+      CATALOG[c.course_id] = {
+        id:        c.course_id,
+        name:      c.title || c.name,
+        desc:      c.description || '',
+        icon:      '📚',
+        iconImg:   c.icon_b64 || '',
+        price:     parseFloat(c.price)      || 0,
+        origPrice: parseFloat(c.orig_price) || 0,
+        active:    c.active !== false && c.active !== 'false',
+        sheetName: c.name  // original key used in COURSE_DATA
+      };
+    });
+
+    // ── Build COURSE_DATA from Sheets data ───────────────────────
+    COURSE_DATA = {};
+    (d.courses||[]).forEach(c => {
+      if(String(c.active).toLowerCase()==='false') return;
+      COURSE_DATA[c.name] = { title: c.title || c.name, classes:[] };
     });
 
     (d.classes||[]).forEach(cls => {
-      const courseName = Object.keys(COURSE_DATA).find(k => {
-        const ck = Object.keys(CATALOG).find(c => CATALOG[c].name.includes(k.split(' ')[0]));
-        return ck && CATALOG[ck].id === cls.course_id;
-      }) || cls.course_id;
-      if(!COURSE_DATA[courseName]) return;
-      const existing = COURSE_DATA[courseName].classes.find(c => c.id === parseInt(cls.class_id));
-      const obj = { id:parseInt(cls.class_id)||0, week:parseInt(cls.week)||1, title:cls.title||'', desc:cls.desc||'', videoId:cls.video_id||'', resources:[] };
-      if(existing) Object.assign(existing, obj);
-      else COURSE_DATA[courseName].classes.push(obj);
-      COURSE_DATA[courseName].classes.sort((a,b)=>a.id-b.id);
+      // Match class to its course by course_id
+      const courseEntry = Object.values(CATALOG).find(c => c.id === cls.course_id);
+      if(!courseEntry) return;
+      const courseName = courseEntry.sheetName;
+      if(!COURSE_DATA[courseName]) COURSE_DATA[courseName] = { title: courseEntry.name, classes:[] };
+      COURSE_DATA[courseName].classes.push({
+        id:       parseInt(cls.class_id) || 0,
+        week:     parseInt(cls.week)     || 1,
+        title:    cls.title  || '',
+        desc:     cls.desc   || '',
+        videoId:  cls.video_id || '',
+        resources:[]
+      });
+      COURSE_DATA[courseName].classes.sort((a,b) => a.id - b.id);
     });
 
-    renderAdminCourseList();
-    renderPriceGrid();
-    Object.keys(CATALOG).forEach(k=>{
-      const pd=document.getElementById('price-display-'+k); if(pd)pd.textContent='$'+CATALOG[k].price.toLocaleString();
-      const od=document.getElementById('orig-display-'+k);  if(od)od.textContent='$'+CATALOG[k].origPrice.toLocaleString();
-    });
-  } catch(e){ console.warn('loadCoursesFromSheet:', e); }
+    // ── Build courseOpts for contact form ────────────────────────
+    courseOpts = Object.values(CATALOG).map(c => c.name);
+    updateContactSelect();
+
+    // ── Render public courses grid ───────────────────────────────
+    renderCoursesGrid(Object.values(CATALOG));
+
+    // ── If admin portal is open, refresh admin UI ────────────────
+    if(currentUser && currentUser.role==='admin'){
+      renderAdminCourseList();
+      renderPriceGrid();
+    }
+
+  } catch(e){
+    console.warn('loadCoursesFromSheet:', e);
+    renderCoursesGrid([]);
+  }
 }
+
+// ── Render the public courses grid dynamically from Sheets data ──
+function renderCoursesGrid(courses){
+  const grid = document.getElementById('courses-grid');
+  if(!grid) return;
+
+  if(!courses.length){
+    grid.innerHTML = `
+      <div style="grid-column:1/-1;text-align:center;padding:3rem 1rem">
+        <div style="font-size:2.5rem;margin-bottom:.75rem">📚</div>
+        <p style="color:var(--muted);font-size:.9rem">
+          ${SCRIPT_URL ? 'No hay cursos activos en este momento.' : 'Configura el servidor para ver los cursos disponibles.'}
+        </p>
+      </div>`;
+    return;
+  }
+
+  grid.innerHTML = courses.map((c,idx) => {
+    const isActive = c.active !== false && c.active !== 'false';
+    const iconHtml = c.iconImg
+      ? `<img src="${c.iconImg}" alt="${c.name}" style="width:28px;height:28px;object-fit:cover;border-radius:4px"/>`
+      : `<svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" stroke-width="2" stroke-linejoin="round"/></svg>`;
+
+    const courseClasses = (COURSE_DATA[c.sheetName||c.name]||{classes:[]}).classes;
+    const weeks = courseClasses.length ? Math.max(...courseClasses.map(cl=>cl.week)) : 0;
+
+    if(isActive){
+      return `<div class="course-card">
+        <div class="cc-top">
+          <div class="cc-icon-wrap">${iconHtml}</div>
+          <span class="cc-badge">⭐ Disponible Ahora</span>
+          <div class="cc-title">${c.name}</div>
+        </div>
+        <div class="cc-body">
+          <p class="cc-desc">${c.desc || 'Programa completo para emprendedores en EE.UU.'}</p>
+          <ul class="cc-features">
+            ${courseClasses.slice(0,5).map(cl=>`<li>${cl.title}</li>`).join('')}
+            ${courseClasses.length > 5 ? `<li>+ ${courseClasses.length-5} clases más</li>` : ''}
+          </ul>
+          <div class="cc-price">
+            <span class="cur" id="price-display-${c.id}">$${(c.price||0).toLocaleString()}</span>
+            <span class="orig" id="orig-display-${c.id}">$${(c.origPrice||0).toLocaleString()}</span>
+            ${c.origPrice > c.price ? `<span class="disc">${Math.round((1-c.price/c.origPrice)*100)}% OFF</span>` : ''}
+          </div>
+          <button class="btn-cc" id="btn-${c.id}" onclick="addToCart('${c.id}')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" stroke="white" stroke-width="2" stroke-linejoin="round"/><line x1="3" y1="6" x2="21" y2="6" stroke="white" stroke-width="2"/><path d="M16 10a4 4 0 01-8 0" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+            Agregar al Carrito
+          </button>
+        </div>
+      </div>`;
+    } else {
+      return `<div class="course-card course-coming">
+        <div class="cc-top">
+          <div class="cc-icon-wrap">${iconHtml}</div>
+          <span class="cc-badge" style="background:rgba(255,255,255,.2)">🔜 Próximamente</span>
+          <div class="cc-title">${c.name}</div>
+        </div>
+        <div class="cc-body">
+          <p class="cc-desc">${c.desc || 'Próximo curso disponible.'}</p>
+          ${weeks ? `<ul class="cc-features"><li>${weeks} semanas de entrenamiento</li><li>${courseClasses.length} clases</li></ul>` : ''}
+          <div class="cc-soon">🔔 Notifícame cuando esté disponible</div>
+          <button class="btn-cc" onclick="notifyMe('${c.id}')" style="background:var(--muted)">Avisarme cuando esté listo</button>
+        </div>
+      </div>`;
+    }
+  }).join('');
+}
+
 
 async function saveCourseToSheet(keyEnc, courseId){
   const key     = decodeURIComponent(keyEnc);
@@ -2688,9 +2713,47 @@ document.getElementById('login-modal').addEventListener('click',function(e){if(e
 document.getElementById('co-modal').addEventListener('click',function(e){if(e.target===this)closeCheckout()});
 document.getElementById('portal').addEventListener('contextmenu',e=>e.preventDefault());
 
+// ── LOAD COURSES ON PAGE LOAD (public, no login needed) ─────────
+// The courses grid on the main page is always loaded from Sheets
+(function initPublicPage(){
+  if(!SCRIPT_URL) return;
+  // Load public courses (no auth required)
+  callAppsScript({action:'getPublicCourses'})
+    .then(d => {
+      if(!d || d.error) return;
+      // Build minimal CATALOG and COURSE_DATA for public grid
+      (d.courses||[]).forEach(c => {
+        if(String(c.active).toLowerCase()==='false') return;
+        CATALOG[c.course_id] = {
+          id: c.course_id, name: c.title||c.name, desc: c.description||'',
+          icon:'📚', iconImg: c.icon_b64||'',
+          price: parseFloat(c.price)||0, origPrice: parseFloat(c.orig_price)||0,
+          active: true, sheetName: c.name
+        };
+        COURSE_DATA[c.name] = { title: c.title||c.name, classes:[] };
+      });
+      (d.classes||[]).forEach(cls => {
+        const ce = Object.values(CATALOG).find(c=>c.id===cls.course_id);
+        if(!ce) return;
+        if(!COURSE_DATA[ce.sheetName]) COURSE_DATA[ce.sheetName]={title:ce.name,classes:[]};
+        COURSE_DATA[ce.sheetName].classes.push({
+          id:parseInt(cls.class_id)||0, week:parseInt(cls.week)||1,
+          title:cls.title||'', desc:cls.desc||'', videoId:'', resources:[]
+        });
+        COURSE_DATA[ce.sheetName].classes.sort((a,b)=>a.id-b.id);
+      });
+      // Update contact form dropdown
+      courseOpts = Object.values(CATALOG).map(c=>c.name);
+      updateContactSelect();
+      // Render the public grid
+      renderCoursesGrid(Object.values(CATALOG));
+    })
+    .catch(() => renderCoursesGrid([]));
+})();
+
 // ── AUTO-RESTORE SESSION (survives page refresh) ──────────────
 (function restoreSession(){
-  if(!isSessionValid()) return; // No valid session in localStorage
+  if(!isSessionValid()) return;
 
   const savedUser = localStorage.getItem('epg_user');
   if(!savedUser) return;
@@ -2698,10 +2761,8 @@ document.getElementById('portal').addEventListener('contextmenu',e=>e.preventDef
   try {
     const user = JSON.parse(savedUser);
     currentUser = user;
-    // Silently restore portal without showing login modal
     openPortal(user);
   } catch(e) {
-    // Invalid saved data — clear it
     clearSession();
   }
 })();
