@@ -404,6 +404,31 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
   .courses-grid,.adv-grid,.res-grid,.vals,.hero-stats,.temario-grid,.price-grid,.frow{grid-template-columns:1fr}
 }
 .nosel{user-select:none;-webkit-user-select:none}
+    /* ── DOCUMENT UPLOAD PANEL ── */
+    .doc-panel{background:var(--off);border-radius:10px;padding:1rem;margin-top:1rem;border:1px solid var(--mid)}
+    .doc-panel-title{font-family:"Nunito Sans",sans-serif;font-weight:800;font-size:.72rem;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.75rem;display:flex;align-items:center;gap:6px}
+    .doc-upload-row{display:grid;grid-template-columns:60px 80px 1fr 1fr auto;gap:.5rem;align-items:flex-end;margin-bottom:.6rem}
+    .doc-upload-row .cf-group{margin:0}
+    .doc-item{display:flex;align-items:center;gap:.6rem;padding:7px 10px;background:var(--white);border-radius:7px;border:1px solid var(--mid);margin-bottom:.35rem}
+    .doc-item-ico{width:28px;height:28px;background:var(--navy);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;color:white}
+    .doc-item-info{flex:1}
+    .doc-item-name{font-size:.8rem;font-weight:700;color:var(--text)}
+    .doc-item-meta{font-size:.68rem;color:var(--muted)}
+    /* Price section inside course editor */
+    .price-editor{background:linear-gradient(135deg,var(--navy),var(--navy-mid));border-radius:12px;padding:1.2rem;margin-top:.75rem;color:white}
+    .price-editor-title{font-family:"Nunito Sans",sans-serif;font-weight:800;font-size:.75rem;text-transform:uppercase;letter-spacing:.5px;color:rgba(255,255,255,.75);margin-bottom:.75rem;display:flex;align-items:center;gap:6px}
+    .price-inputs{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+    .price-inputs .cf-group label{color:rgba(255,255,255,.75)}
+    .price-inputs .cf-group input{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.25);color:white}
+    .price-inputs .cf-group input:focus{border-color:var(--orange)}
+    .price-inputs .cf-group input::placeholder{color:rgba(255,255,255,.4)}
+    /* Zoom / recorded url fields */
+    .zoom-row{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-top:.75rem}
+    /* Course active/inactive badge */
+    .badge-active{background:#dcfce7;color:#166534;font-weight:800;padding:3px 10px;border-radius:20px;font-size:.65rem;text-transform:uppercase;letter-spacing:.5px}
+    .badge-inactive{background:#f3f4f6;color:#6b7280;font-weight:800;padding:3px 10px;border-radius:20px;font-size:.65rem;text-transform:uppercase;letter-spacing:.5px}
+    @media(max-width:640px){.doc-upload-row{grid-template-columns:1fr 1fr}.price-inputs,.zoom-row{grid-template-columns:1fr}}
+
     /* ── ICON UPLOAD ── */
     .icon-upload-wrap{display:flex;align-items:center;gap:.75rem}
     .icon-preview{width:52px;height:52px;border-radius:10px;background:var(--navy);display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0;overflow:hidden;border:2px solid var(--mid)}
@@ -1061,66 +1086,84 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
       <div class="admin-panel">
         <h4>🔧 Panel de Administrador</h4>
         <div class="atabs" id="admin-tabs">
-          <button class="atab on"  onclick="aTab('contacts',this)">📋 Contactos</button>
-          <button class="atab"     onclick="aTab('orders',this)">🧾 Órdenes</button>
-          <button class="atab"     onclick="aTab('courses',this)">📚 Cursos</button>
-          <button class="atab"     onclick="aTab('pricelog',this)">📊 Cambios de Precio</button>
-          <button class="atab"     onclick="aTab('config',this)">⚙️ Configuración</button>
+          <button class="atab on" onclick="aTab('courses',this)">📚 Administración de Cursos</button>
+          <button class="atab"    onclick="aTab('contacts',this)">📋 Contactos</button>
+          <button class="atab"    onclick="aTab('orders',this)">🧾 Órdenes</button>
+          <button class="atab"    onclick="aTab('pricelog',this)">📊 Precios Log</button>
+          <button class="atab"    onclick="aTab('config',this)">⚙️ Configuración</button>
         </div>
 
-        <!-- ── CONTACTOS ─────────────────────── -->
-        <div class="asec on" id="asec-contacts">
-          <div class="admin-section-title">📋 Formularios de Contacto</div>
-          <button class="btn-sm navy" onclick="loadContacts()" style="margin-bottom:.9rem">🔄 Cargar Contactos</button>
-          <div id="contacts-wrap"><p class="empty-adm">Haz clic en Cargar Contactos.</p></div>
-        </div>
+        <!-- ══ ADMINISTRACIÓN DE CURSOS ══════════════════════════ -->
+        <div class="asec on" id="asec-courses">
 
-        <!-- ── ÓRDENES ──────────────────────── -->
-        <div class="asec" id="asec-orders">
-          <div class="admin-section-title">🧾 Órdenes de Compra</div>
-          <button class="btn-sm navy" onclick="loadOrders()" style="margin-bottom:.9rem">🔄 Cargar Órdenes</button>
-          <div id="orders-wrap"><p class="empty-adm">Haz clic en Cargar Órdenes.</p></div>
-        </div>
-
-        <!-- ── CURSOS ───────────────────────── -->
-        <div class="asec" id="asec-courses">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem">
-            <div class="admin-section-title" style="margin:0">📚 Gestión de Cursos</div>
-            <button class="btn-sm orange" onclick="openNewCourse()">+ Nuevo Curso</button>
+          <!-- Sub-tabs: Activos / Inactivos -->
+          <div style="display:flex;gap:.5rem;margin-bottom:1.5rem;border-bottom:2px solid var(--mid);padding-bottom:.75rem">
+            <button class="atab on" id="ctab-active"   onclick="courseTab('active',this)">🟢 Cursos Activos</button>
+            <button class="atab"    id="ctab-inactive" onclick="courseTab('inactive',this)">⏸ Cursos Inactivos</button>
+            <button class="btn-sm orange" style="margin-left:auto" onclick="openNewCourse()">+ Nuevo Curso</button>
           </div>
-          <!-- New course form (hidden by default) -->
+
+          <!-- New course form -->
           <div class="uform" id="new-course-form" style="display:none">
             <div class="uform-title">✨ Crear Nuevo Curso</div>
             <div class="uform-grid">
-              <div class="cf-group"><label>Nombre del curso *</label><input id="nc-name" placeholder="Ej: Negocio de Jardinería en EE.UU." /></div>
-              <div class="cf-group"><label>Ícono (emoji)</label><input id="nc-icon" placeholder="🌱" style="width:80px"/></div>
+              <div class="cf-group"><label>Nombre del curso *</label><input id="nc-name" placeholder="Ej: Negocio de Jardinería en EE.UU."/></div>
+              <div class="cf-group"><label>Ícono (emoji)</label><input id="nc-icon" placeholder="🌱" style="width:70px"/></div>
             </div>
             <div class="cf-group"><label>Descripción corta</label><input id="nc-desc" placeholder="Ej: 6 semanas · Clases en vivo · Software incluido"/></div>
             <div class="uform-grid">
               <div class="cf-group"><label>Precio actual ($)</label><input type="number" id="nc-price" placeholder="997" min="0"/></div>
               <div class="cf-group"><label>Precio original ($)</label><input type="number" id="nc-orig" placeholder="1497" min="0"/></div>
             </div>
+            <div class="cf-group">
+              <label>Estado inicial</label>
+              <select id="nc-active">
+                <option value="true">🟢 Activo — visible en la tienda</option>
+                <option value="false">⏸ Inactivo — oculto de la tienda</option>
+              </select>
+            </div>
             <div class="uform-actions">
               <button class="btn-sm orange" onclick="saveNewCourse()">💾 Crear Curso</button>
               <button class="btn-sm ghost" onclick="document.getElementById('new-course-form').style.display='none'">Cancelar</button>
             </div>
           </div>
-          <!-- Course list -->
-          <div class="course-list-admin" id="admin-course-list"></div>
+
+          <!-- Active courses list -->
+          <div id="courses-active-wrap">
+            <div class="course-list-admin" id="admin-course-list"></div>
+          </div>
+
+          <!-- Inactive courses list -->
+          <div id="courses-inactive-wrap" style="display:none">
+            <div class="course-list-admin" id="admin-course-list-inactive"></div>
+          </div>
+
         </div>
 
-        <!-- ── HISTORIAL DE PRECIOS ───────────── -->
+        <!-- ══ CONTACTOS ══════════════════════════════════════════ -->
+        <div class="asec" id="asec-contacts">
+          <div class="admin-section-title">📋 Formularios de Contacto</div>
+          <button class="btn-sm navy" onclick="loadContacts()" style="margin-bottom:.9rem">🔄 Cargar Contactos</button>
+          <div id="contacts-wrap"><p class="empty-adm">Haz clic en Cargar Contactos.</p></div>
+        </div>
+
+        <!-- ══ ÓRDENES ════════════════════════════════════════════ -->
+        <div class="asec" id="asec-orders">
+          <div class="admin-section-title">🧾 Órdenes de Compra</div>
+          <button class="btn-sm navy" onclick="loadOrders()" style="margin-bottom:.9rem">🔄 Cargar Órdenes</button>
+          <div id="orders-wrap"><p class="empty-adm">Haz clic en Cargar Órdenes.</p></div>
+        </div>
+
+        <!-- ══ PRECIO LOG ═════════════════════════════════════════ -->
         <div class="asec" id="asec-pricelog">
           <div class="admin-section-title">📊 Historial de Cambios de Precio</div>
           <button class="btn-sm navy" onclick="loadPriceLog()" style="margin-bottom:.9rem">🔄 Cargar Historial</button>
           <div id="pricelog-wrap"><p class="empty-adm">Haz clic en Cargar Historial.</p></div>
         </div>
 
-        <!-- ── CONFIGURACIÓN ─────────────────── -->
+        <!-- ══ CONFIGURACIÓN ══════════════════════════════════════ -->
         <div class="asec" id="asec-config">
           <div class="admin-section-title">⚙️ Configuración del Sistema</div>
-
-          <!-- SUB-TABS inside config -->
           <div style="display:flex;gap:.5rem;margin-bottom:1.2rem;flex-wrap:wrap" id="cfg-subtabs">
             <button class="atab on" onclick="cfgTab('users',this)">👤 Usuarios</button>
             <button class="atab"    onclick="cfgTab('prices',this)">💰 Precios</button>
@@ -1129,13 +1172,12 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
             <button class="atab"    onclick="cfgTab('contactform',this)">📝 Formulario</button>
           </div>
 
-          <!-- USERS sub-section -->
+          <!-- USERS -->
           <div id="cfg-users" class="cfg-sec">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
               <p style="color:var(--muted);font-size:.83rem">Gestiona los accesos al portal de estudiantes.</p>
               <button class="btn-sm orange" onclick="toggleUserForm()">+ Nuevo Usuario</button>
             </div>
-            <!-- Create user form -->
             <div class="uform" id="user-form" style="display:none">
               <div class="uform-title" id="uform-title">➕ Crear Nuevo Usuario</div>
               <div class="uform-grid">
@@ -1145,21 +1187,14 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
               <div class="uform-grid">
                 <div class="cf-group"><label>Contraseña *</label><input type="password" id="uf-pass" placeholder="Mín. 8 caracteres"/></div>
                 <div class="cf-group"><label>Rol</label>
-                  <select id="uf-role">
-                    <option value="student">Estudiante</option>
-                    <option value="admin">Administrador</option>
-                  </select>
+                  <select id="uf-role"><option value="student">Estudiante</option><option value="admin">Administrador</option></select>
                 </div>
               </div>
               <div class="cf-group">
                 <label>Cursos asignados</label>
-                <div class="course-picker" id="uf-course-picker">
-                  <p class="cp-empty" style="padding:.6rem 1rem">Cargando cursos...</p>
-                </div>
-                <div class="cp-selected-tags" id="uf-selected-tags">
-                  <span class="cp-empty">Ningún curso seleccionado</span>
-                </div>
-                <input type="hidden" id="uf-courses" />
+                <div class="course-picker" id="uf-course-picker"><p class="cp-empty" style="padding:.6rem 1rem">Cargando cursos...</p></div>
+                <div class="cp-selected-tags" id="uf-selected-tags"><span class="cp-empty">Ningún curso seleccionado</span></div>
+                <input type="hidden" id="uf-courses"/>
               </div>
               <div id="uform-err" style="display:none;background:#fef2f2;border:1px solid #fca5a5;color:#991b1b;border-radius:7px;padding:8px 10px;font-size:.78rem;margin-top:.5rem"></div>
               <div class="uform-actions">
@@ -1167,41 +1202,37 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
                 <button class="btn-sm ghost" onclick="cancelUserForm()">Cancelar</button>
               </div>
             </div>
-            <!-- Users table -->
             <button class="btn-sm navy" onclick="loadUsers()" style="margin-bottom:.75rem">🔄 Cargar Usuarios</button>
             <div id="users-wrap"><p class="empty-adm">Haz clic en Cargar Usuarios.</p></div>
           </div>
 
-          <!-- PRICES sub-section -->
+          <!-- PRICES -->
           <div id="cfg-prices" class="cfg-sec" style="display:none">
-            <p style="color:var(--muted);font-size:.83rem;margin-bottom:.9rem">Configura los precios de los cursos. Los cambios se reflejan inmediatamente en la tienda.</p>
+            <p style="color:var(--muted);font-size:.83rem;margin-bottom:.9rem">Configura los precios. Cada cambio se registra automáticamente en el historial.</p>
             <div class="price-grid" id="price-grid"></div>
           </div>
 
-          <!-- DRIVE sub-section -->
+          <!-- DRIVE -->
           <div id="cfg-drive" class="cfg-sec" style="display:none">
             <div class="drive-info-box">
-              <strong>📁 Cómo subir material desde Google Drive</strong><br/>
-              1. Sube el archivo a <code>drive.google.com/drive/folders/1rcEHkWYerJvEg4teKrOtZ4yBkyVx3Jis</code><br/>
-              2. Clic derecho → Compartir → <strong>Cualquier persona con el enlace puede ver</strong><br/>
-              3. Copia el enlace y agrégalo en la clase correspondiente.<br/>
-              <strong>Para videos:</strong> YouTube No Listado → copia el ID de 11 caracteres de la URL.
+              <strong>📁 Gestión de Recursos desde Google Drive</strong><br/>
+              Sube archivos a Drive → comparte como "Cualquier persona con el enlace puede ver" → copia el link y agrégalo aquí vinculado a la clase correspondiente.
             </div>
             <div class="drive-form">
               <div class="fg"><label>Clase #</label><input type="number" id="dr-cls" placeholder="1" style="width:70px" class="pinput"/></div>
               <div class="fg"><label>Tipo</label><select id="dr-type" class="pinput" style="width:90px"><option value="pdf">PDF</option><option value="pptx">PPTX</option><option value="video">Video</option><option value="link">Link</option></select></div>
-              <div class="fg" style="flex:2"><label>Nombre del Recurso</label><input type="text" id="dr-name" placeholder="Presentación Semana 1..." class="pinput" style="width:100%"/></div>
-              <div class="fg" style="flex:2"><label>URL de Drive / YouTube ID</label><input type="text" id="dr-url" placeholder="https://drive.google.com/... o ID_video" class="pinput" style="width:100%"/></div>
+              <div class="fg" style="flex:2"><label>Nombre</label><input type="text" id="dr-name" placeholder="Presentación Semana 1..." class="pinput" style="width:100%"/></div>
+              <div class="fg" style="flex:2"><label>URL de Drive</label><input type="text" id="dr-url" placeholder="https://drive.google.com/..." class="pinput" style="width:100%"/></div>
               <button class="btn-add-res" onclick="addResource()">+ Agregar</button>
             </div>
             <div id="resources-list"></div>
           </div>
 
-          <!-- STRIPE sub-section -->
+          <!-- STRIPE -->
           <div id="cfg-stripe" class="cfg-sec" style="display:none">
             <div class="stripe-cfg">
               <strong>⚙️ Clave Pública de Stripe (Publishable Key)</strong>
-              Empieza con <code>pk_test_...</code> (pruebas) o <code>pk_live_...</code> (producción).<br/>
+              Empieza con <code>pk_test_...</code> o <code>pk_live_...</code>.<br/>
               Ve a: <a href="https://dashboard.stripe.com/apikeys" target="_blank" style="color:var(--orange);font-weight:700">dashboard.stripe.com/apikeys →</a>
               <input class="spk-inp" id="spk-inp" placeholder="pk_test_..." />
               <div style="display:flex;gap:.5rem;margin-top:.6rem;flex-wrap:wrap">
@@ -1211,14 +1242,15 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
               </div>
             </div>
             <hr class="adiv"/>
-            <p style="font-family:'Nunito Sans',sans-serif;font-weight:800;font-size:.78rem;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.5rem">Link de Clase en Vivo</p>
+            <p style="font-family:'Nunito Sans',sans-serif;font-weight:800;font-size:.78rem;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.5rem">Link de Clase en Vivo (global)</p>
+            <p style="color:var(--muted);font-size:.75rem;margin-bottom:.5rem">Este link es el predeterminado. Cada clase puede tener su propio link de Zoom en la sección de cursos.</p>
             <input class="spk-inp" id="live-link-inp" placeholder="https://zoom.us/j/... o Google Meet URL" style="margin-bottom:.5rem"/>
             <button class="btn-sm navy" onclick="saveLiveLink()">💾 Guardar Link</button>
           </div>
 
-          <!-- CONTACT FORM sub-section -->
+          <!-- CONTACT FORM -->
           <div id="cfg-contactform" class="cfg-sec" style="display:none">
-            <p style="color:var(--muted);font-size:.83rem;margin-bottom:.9rem">Configura las opciones del menú desplegable "Curso de interés" en el formulario de contacto.</p>
+            <p style="color:var(--muted);font-size:.83rem;margin-bottom:.9rem">Opciones del menú "Curso de interés" en el formulario de contacto.</p>
             <div style="display:flex;gap:.5rem;margin-bottom:.75rem">
               <input class="spk-inp" id="new-co" placeholder="Nombre del curso..." style="flex:1"/>
               <button class="btn-sm navy" onclick="addCourseOpt()">+ Agregar</button>
@@ -1226,8 +1258,7 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
             <div id="course-opts-list"></div>
           </div>
 
-        </div><!-- end asec-config -->
-
+        </div>
       </div>
     </div>
   </div>
@@ -1415,6 +1446,101 @@ function updateSelectedTags(){
   ).join('');
 
   if(hidden) hidden.value = _selectedCourses.join(', ');
+}
+
+// ================================================================
+// DOCUMENT MANAGEMENT
+// ================================================================
+function toggleDocPanel(keyEnc, idx){
+  const el = document.getElementById('docpanel-'+keyEnc+'-'+idx);
+  if(!el) return;
+  const isOpen = el.style.display === 'block';
+  el.style.display = isOpen ? 'none' : 'block';
+  if(!isOpen) loadDocumentsForClass(keyEnc, idx);
+}
+
+async function loadDocumentsForClass(keyEnc, idx){
+  const key = decodeURIComponent(keyEnc);
+  const cls = COURSE_DATA[key]?.classes[idx];
+  if(!cls) return;
+  const wrap = document.getElementById('doclist-'+keyEnc+'-'+idx);
+  if(!wrap) return;
+  if(!SCRIPT_URL){ wrap.innerHTML='<p style="color:var(--muted);font-size:.75rem">Sin conexión al servidor.</p>'; return; }
+
+  wrap.innerHTML='<p style="color:var(--muted);font-size:.75rem">⏳ Cargando documentos...</p>';
+  const catKey = Object.keys(CATALOG).find(k=>CATALOG[k].sheetName===key||CATALOG[k].name.includes(key.split(' ')[0]));
+  const courseId = catKey || key.toLowerCase().replace(/[^a-z0-9]/g,'_');
+
+  try{
+    const d = await callAppsScript({action:'getDocuments', course_id:courseId, class_id:cls.id});
+    const docs = d.docs||[];
+    if(!docs.length){ wrap.innerHTML='<p style="color:var(--muted);font-size:.75rem;font-style:italic">Sin documentos en esta clase. Agrega uno arriba.</p>'; return; }
+    const icons = {pdf:'📄',pptx:'📊',video:'🎬',link:'🔗'};
+    wrap.innerHTML = docs.map(doc=>`
+      <div class="doc-item">
+        <div class="doc-item-ico">${icons[doc.type]||'📎'}</div>
+        <div class="doc-item-info">
+          <div class="doc-item-name">${doc.name}</div>
+          <div class="doc-item-meta">${doc.type.toUpperCase()} · Subido por ${doc.uploaded_by} · ${doc.uploaded_at}</div>
+        </div>
+        <button class="btn-icon danger" onclick="deleteDoc('${doc.doc_id}','${keyEnc}',${idx})" title="Eliminar">🗑️</button>
+      </div>`).join('');
+  } catch(e){
+    wrap.innerHTML='<p style="color:#991b1b;font-size:.75rem">Error: '+e.message+'</p>';
+  }
+}
+
+async function saveDocument(keyEnc, idx){
+  const key  = decodeURIComponent(keyEnc);
+  const cls  = COURSE_DATA[key]?.classes[idx];
+  if(!cls) return;
+  const type = (document.getElementById('dt-type-'+keyEnc+'-'+idx)||{value:'pdf'}).value;
+  const name = (document.getElementById('dt-name-'+keyEnc+'-'+idx)||{value:''}).value.trim();
+  const url  = (document.getElementById('dt-url-'+keyEnc+'-'+idx)||{value:''}).value.trim();
+
+  if(!name||!url){ toast('El nombre y la URL son obligatorios.','err'); return; }
+
+  const catKey  = Object.keys(CATALOG).find(k=>CATALOG[k].sheetName===key||CATALOG[k].name.includes(key.split(' ')[0]));
+  const courseId= catKey || key.toLowerCase().replace(/[^a-z0-9]/g,'_');
+
+  if(!SCRIPT_URL){ toast('Sin conexión al servidor.','err'); return; }
+
+  try{
+    const r = await callAppsScript({
+      action:'saveDocument', course_id:courseId, class_id:cls.id,
+      week:cls.week, name, type, drive_url:url
+    });
+    if(r && r.success){
+      toast('✅ Documento guardado en Sheets');
+      document.getElementById('dt-name-'+keyEnc+'-'+idx).value='';
+      document.getElementById('dt-url-'+keyEnc+'-'+idx).value='';
+      loadDocumentsForClass(keyEnc, idx);
+    } else {
+      toast((r&&r.error)||'Error al guardar','err');
+    }
+  } catch(e){ toast('Error: '+e.message,'err'); }
+}
+
+async function deleteDoc(docId, keyEnc, idx){
+  if(!confirm('¿Eliminar este documento?')) return;
+  try{
+    const r = await callAppsScript({action:'deleteDocument', doc_id:docId});
+    if(r && r.success){ toast('🗑️ Documento eliminado'); loadDocumentsForClass(keyEnc, idx); }
+    else toast('Error al eliminar','err');
+  } catch(e){ toast('Error: '+e.message,'err'); }
+}
+
+// ================================================================
+// DELETE COURSE
+// ================================================================
+async function deleteCourse(keyEnc){
+  const key = decodeURIComponent(keyEnc);
+  if(!confirm('¿Eliminar el curso "'+key+'"? Esta acción eliminará el curso localmente. Los datos en Sheets deben borrarse manualmente.')) return;
+  delete COURSE_DATA[key];
+  const catKey = Object.keys(CATALOG).find(k=>CATALOG[k].sheetName===key||CATALOG[k].name.includes(key.split(' ')[0]));
+  if(catKey) delete CATALOG[catKey];
+  renderAdminCourseList();
+  toast('🗑️ Curso eliminado localmente. Recuerda borrarlo en Google Sheets.');
 }
 
 // ── CONNECTION TEST ──
@@ -1740,7 +1866,7 @@ function renderCourse(name){
             <h4><span class="ldot"></span>Próxima Clase en Vivo</h4>
             <p>Conéctate a la sesión con tu instructor. El enlace está protegido.</p>
           </div>
-          <button class="btn-live" onclick="joinLive()">🎥 Unirme a la Clase</button>
+          <button class="btn-live" id="live-class-btn" onclick="joinLive(window._currentClassZoom||'')" >🎥 Unirme a la Clase</button>
         </div>
       </div>
     </div>`;
@@ -1756,9 +1882,37 @@ function selClass(id,courseName){
   document.getElementById('pvid-desc').textContent=cls.desc;
   const wrap=document.getElementById('pvid-wrap');
   if(cls.videoId){
+    // YouTube embed
     wrap.innerHTML=`<iframe src="https://www.youtube-nocookie.com/embed/${cls.videoId}?rel=0&modestbranding=1&fs=0&iv_load_policy=3" allow="accelerometer;autoplay;encrypted-media;gyroscope" oncontextmenu="return false" style="width:100%;height:100%;border:none"></iframe>`;
-  }else{
+  } else if(cls.recordedUrl && cls.recordedUrl.trim()){
+    // Recorded class URL (Drive or external)
+    const recUrl = cls.recordedUrl.trim();
+    const isYT   = recUrl.includes('youtube.com')||recUrl.includes('youtu.be');
+    const isDrive= recUrl.includes('drive.google.com');
+    let embedSrc = recUrl;
+    if(isYT){
+      const ytId = recUrl.match(/(?:v=|youtu\.be\/)([^&?/]+)/)?.[1];
+      if(ytId) embedSrc=`https://www.youtube-nocookie.com/embed/${ytId}?rel=0&modestbranding=1&fs=0`;
+    } else if(isDrive){
+      const drId = recUrl.match(/\/d\/([a-zA-Z0-9_-]+)/)?.[1];
+      if(drId) embedSrc=`https://drive.google.com/file/d/${drId}/preview`;
+    }
+    wrap.innerHTML=`<iframe src="${embedSrc}" allow="autoplay;fullscreen" allowfullscreen oncontextmenu="return false" sandbox="allow-scripts allow-same-origin allow-presentation" style="width:100%;height:100%;border:none"></iframe>`;
+  } else {
     wrap.innerHTML=`<div class="pvid-placeholder"><div class="pi">🎬</div><p style="font-size:.95rem;font-weight:700;color:white">Clase ${cls.id}: ${cls.title}</p><p style="font-size:.78rem;margin-top:.3rem">Video disponible próximamente</p></div>`;
+  }
+  // Store current class zoom for live button
+  window._currentClassZoom = cls.zoomUrl || '';
+  // Update live banner to reflect class-specific zoom
+  const lb = document.getElementById('live-class-btn');
+  if(lb){
+    if(cls.zoomUrl && cls.zoomUrl.trim()){
+      lb.style.background='var(--green)';
+      lb.title='Clase en vivo configurada para esta clase';
+    } else {
+      lb.style.background='';
+      lb.title='Usando link global de Zoom';
+    }
   }
   // Render Drive resources
   const resEl=document.getElementById('pvid-resources');
@@ -1801,9 +1955,10 @@ function extractDriveId(url){
   return m?m[1]:url;
 }
 
-function joinLive(){
+function joinLive(zoomUrl){
   try{
-    const link=atob(liveLinkEnc);
+    // Use class-specific zoom URL if provided, else global
+    const link = zoomUrl && zoomUrl.trim() ? zoomUrl : atob(liveLinkEnc);
     const w=window.open('','_blank','width=1200,height=700,menubar=no,toolbar=no,location=no,status=no');
     if(w){
       w.document.write(`<!DOCTYPE html><html><head><title>Clase en Vivo — EPG</title>
@@ -1832,7 +1987,7 @@ function aTab(id,btn){
   btn.classList.add('on');
   const sec = document.getElementById('asec-'+id);
   if(sec){ sec.classList.add('on'); }
-  if(id==='courses')  renderAdminCourseList();
+  if(id==='courses'){ renderAdminCourseList(); courseTab('active', document.getElementById('ctab-active')); }
   if(id==='pricelog') loadPriceLog();
   if(id==='orders')   loadOrders();
   if(id==='config'){
@@ -2224,31 +2379,58 @@ async function loadUsers(){
 // ================================================================
 
 function renderAdminCourseList(){
-  const el=document.getElementById('admin-course-list');
-  if(!el)return;
-  const keys=Object.keys(COURSE_DATA);
+  renderCourseGroup(true);
+  renderCourseGroup(false);
+}
+
+function courseTab(type, btn){
+  document.querySelectorAll('[id^="ctab-"]').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('courses-active-wrap').style.display   = type==='active'   ? 'block' : 'none';
+  document.getElementById('courses-inactive-wrap').style.display = type==='inactive' ? 'block' : 'none';
+}
+
+function renderCourseGroup(active){
+  const listId = active ? 'admin-course-list' : 'admin-course-list-inactive';
+  const el = document.getElementById(listId);
+  if(!el) return;
+
+  const keys = Object.keys(COURSE_DATA).filter(key => {
+    const catKey = Object.keys(CATALOG).find(k=>CATALOG[k].name.includes(key.split(' ')[0])||CATALOG[k].sheetName===key);
+    const cat = catKey ? CATALOG[catKey] : null;
+    const isActive = cat ? (cat.active !== false && cat.active !== 'false') : true;
+    return active ? isActive : !isActive;
+  });
+
   if(!keys.length){
-    el.innerHTML='<div class="empty-adm"><div style="font-size:2rem;margin-bottom:.5rem">📚</div><p>No hay cursos creados aún. Haz clic en "+ Nuevo Curso".</p></div>';
+    el.innerHTML=`<div class="empty-adm"><div style="font-size:2rem;margin-bottom:.5rem">${active?'📚':'⏸'}</div><p>${active?'No hay cursos activos. Crea uno con "+ Nuevo Curso".':'No hay cursos inactivos.'}</p></div>`;
     return;
   }
+
   el.innerHTML=keys.map(key=>{
     const c=COURSE_DATA[key];
-    const catKey=Object.keys(CATALOG).find(k=>CATALOG[k].name.includes(key.split(' ')[0]))||Object.keys(CATALOG)[0];
-    const cat=CATALOG[catKey]||{icon:'📚',price:0};
-    return `<div class="citem" id="cadm-${encodeURIComponent(key)}">
+    const catKey=Object.keys(CATALOG).find(k=>CATALOG[k].name.includes(key.split(' ')[0])||CATALOG[k].sheetName===key)||Object.keys(CATALOG)[0];
+    const cat=CATALOG[catKey]||{icon:'📚',price:0,origPrice:0,desc:'',active:true};
+    const iconHtml=cat.iconImg
+      ?`<img src="${cat.iconImg}" style="width:24px;height:24px;object-fit:cover;border-radius:4px"/>`
+      :(cat.icon||'📚');
+    const isActive = cat.active !== false && cat.active !== 'false';
+
+    return `<div class="citem ${isActive?'':''}active" id="cadm-${encodeURIComponent(key)}">
       <div class="citem-hdr" onclick="toggleCourseAdmin('${encodeURIComponent(key)}')">
-        <div class="citem-ico">${cat.icon||'📚'}</div>
+        <div class="citem-ico">${iconHtml}</div>
         <div style="flex:1">
           <div class="citem-name">${c.title}</div>
-          <div class="citem-meta">${c.classes.length} clases · $${cat.price||0}</div>
+          <div class="citem-meta">${c.classes.length} clases · $${cat.price||0} · <span class="${isActive?'badge-active':'badge-inactive'}">${isActive?'Activo':'Inactivo'}</span></div>
         </div>
-        <button class="btn-icon" onclick="event.stopPropagation();editCourseInfo('${encodeURIComponent(key)}')" title="Editar info del curso">✏️</button>
+        <button class="btn-icon" onclick="event.stopPropagation();editCourseInfo('${encodeURIComponent(key)}')" title="Editar">✏️</button>
+        <button class="btn-icon danger" onclick="event.stopPropagation();deleteCourse('${encodeURIComponent(key)}')" title="Eliminar curso">🗑️</button>
         <span class="citem-chev" id="chev-${encodeURIComponent(key)}">▼</span>
       </div>
       <div class="citem-body" id="cbody-${encodeURIComponent(key)}">
-        <!-- Course info edit form (hidden) -->
+        <!-- ── Course info edit form ── -->
         <div id="cedit-${encodeURIComponent(key)}" class="uform" style="display:none;margin-bottom:1rem">
-          <div class="uform-title">✏️ Editar Información del Curso &nbsp;<span class="sync-dot unsynced" id="sync-${encodeURIComponent(key)}" title="Sin guardar"></span></div>
+          <div class="uform-title">✏️ Editar Curso &nbsp;<span class="sync-dot unsynced" id="sync-${encodeURIComponent(key)}"></span></div>
           <div class="uform-grid">
             <div class="cf-group"><label>Título del curso</label><input id="ct-title-${encodeURIComponent(key)}" value="${c.title}"/></div>
             <div class="cf-group"><label>Descripción corta</label><input id="ct-desc-${encodeURIComponent(key)}" value="${cat.desc||''}"/></div>
@@ -2256,19 +2438,28 @@ function renderAdminCourseList(){
           <div class="cf-group">
             <label>Ícono del curso</label>
             <div class="icon-upload-wrap">
-              <div class="icon-preview" id="icon-prev-${encodeURIComponent(key)}">${cat.iconImg?'<img src="'+cat.iconImg+'" alt="icon"/>':(cat.icon||'📚')}</div>
+              <div class="icon-preview" id="icon-prev-${encodeURIComponent(key)}">${cat.iconImg?'<img src="'+cat.iconImg+'" alt="icon" style="width:100%;height:100%;object-fit:cover;border-radius:8px"/>':cat.icon||'📚'}</div>
               <div>
-                <div class="icon-upload-btn">
-                  <button class="btn-sm ghost" type="button">📁 Subir imagen</button>
-                  <input type="file" accept="image/*" onchange="loadIconFile(event,'${encodeURIComponent(key)}')"/>
-                </div>
-                <p style="font-size:.68rem;color:var(--muted);margin-top:3px">PNG/JPG máx 200KB · Se guarda en Google Sheets</p>
+                <div class="icon-upload-btn"><button class="btn-sm ghost" type="button">📁 Subir imagen</button>
+                  <input type="file" accept="image/*" onchange="loadIconFile(event,'${encodeURIComponent(key)}')"/></div>
+                <p style="font-size:.68rem;color:var(--muted);margin-top:3px">PNG/JPG máx 200KB</p>
               </div>
             </div>
           </div>
-          <div class="uform-grid">
-            <div class="cf-group"><label>Precio actual ($)</label><input type="number" id="ct-price-${encodeURIComponent(key)}" value="${cat.price||0}"/></div>
-            <div class="cf-group"><label>Precio original ($)</label><input type="number" id="ct-orig-${encodeURIComponent(key)}" value="${cat.origPrice||0}"/></div>
+          <!-- Price editor -->
+          <div class="price-editor">
+            <div class="price-editor-title">💰 Precio del Curso (el cambio se registra en el historial)</div>
+            <div class="price-inputs">
+              <div class="cf-group"><label>Precio actual ($)</label><input type="number" id="ct-price-${encodeURIComponent(key)}" value="${cat.price||0}" placeholder="997"/></div>
+              <div class="cf-group"><label>Precio original ($)</label><input type="number" id="ct-orig-${encodeURIComponent(key)}" value="${cat.origPrice||0}" placeholder="1497"/></div>
+            </div>
+          </div>
+          <div class="cf-group" style="margin-top:.75rem">
+            <label>Estado del curso</label>
+            <select id="ct-active-${encodeURIComponent(key)}">
+              <option value="true" ${isActive?'selected':''}>🟢 Activo — visible en la tienda</option>
+              <option value="false" ${!isActive?'selected':''}>⏸ Inactivo — oculto de la tienda</option>
+            </select>
           </div>
           <div class="uform-actions">
             <button class="btn-sm orange" onclick="saveCourseInfo('${encodeURIComponent(key)}')">💾 Guardar en Sheets</button>
@@ -2276,25 +2467,33 @@ function renderAdminCourseList(){
             <button class="btn-sm ghost" onclick="document.getElementById('cedit-${encodeURIComponent(key)}').style.display='none'">Cancelar</button>
           </div>
           <div id="plog-inline-${encodeURIComponent(key)}" style="display:none;margin-top:.75rem"></div>
-        </div>lass list -->
+        </div>
+
+        <!-- ── Class list ── -->
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.7rem">
           <span style="font-family:'Nunito Sans',sans-serif;font-weight:800;font-size:.78rem;color:var(--navy);text-transform:uppercase;letter-spacing:.5px">Clases (${c.classes.length})</span>
           <button class="btn-sm orange" onclick="openNewClass('${encodeURIComponent(key)}')">+ Nueva Clase</button>
         </div>
-        <!-- New class form (hidden) -->
+
+        <!-- New class form -->
         <div class="cls-edit" id="newcls-${encodeURIComponent(key)}">
           <div style="font-family:'Nunito Sans',sans-serif;font-weight:800;font-size:.78rem;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.6rem">➕ Nueva Clase</div>
           <div class="f2col">
-            <div class="cf-group"><label>Semana</label><input type="number" id="ncl-week-${encodeURIComponent(key)}" placeholder="1" min="1" max="20"/></div>
-            <div class="cf-group"><label>ID de Video YouTube</label><input id="ncl-vid-${encodeURIComponent(key)}" placeholder="dQw4w9WgXcQ (opcional)"/></div>
+            <div class="cf-group"><label>Semana</label><input type="number" id="ncl-week-${encodeURIComponent(key)}" placeholder="1" min="1"/></div>
+            <div class="cf-group"><label>ID Video YouTube (opcional)</label><input id="ncl-vid-${encodeURIComponent(key)}" placeholder="ID del video (11 caracteres)"/></div>
           </div>
           <div class="cf-group"><label>Título de la clase *</label><input id="ncl-title-${encodeURIComponent(key)}" placeholder="Ej: Introducción al Negocio"/></div>
-          <div class="cf-group"><label>Descripción</label><textarea id="ncl-desc-${encodeURIComponent(key)}" placeholder="Breve descripción del contenido de esta clase..."></textarea></div>
+          <div class="cf-group"><label>Descripción</label><textarea id="ncl-desc-${encodeURIComponent(key)}" placeholder="Descripción del contenido..."></textarea></div>
+          <div class="zoom-row">
+            <div class="cf-group"><label>🎥 URL Zoom / Meet (clase en vivo)</label><input id="ncl-zoom-${encodeURIComponent(key)}" placeholder="https://zoom.us/j/..."/></div>
+            <div class="cf-group"><label>🎬 URL Clase Grabada</label><input id="ncl-rec-${encodeURIComponent(key)}" placeholder="https://drive.google.com/... o YouTube URL"/></div>
+          </div>
           <div class="uform-actions">
             <button class="btn-sm orange" onclick="saveNewClass('${encodeURIComponent(key)}')">💾 Agregar Clase</button>
             <button class="btn-sm ghost" onclick="document.getElementById('newcls-${encodeURIComponent(key)}').classList.remove('open')">Cancelar</button>
           </div>
         </div>
+
         <div id="clslist-${encodeURIComponent(key)}">
           ${renderClassRows(key)}
         </div>
@@ -2305,33 +2504,62 @@ function renderAdminCourseList(){
 
 function renderClassRows(courseKey){
   const c=COURSE_DATA[courseKey];
-  if(!c||!c.classes.length) return '<p class="empty-adm">Sin clases todavía.</p>';
-  return c.classes.map((cls,idx)=>`
+  if(!c||!c.classes.length) return '<p class="empty-adm">Sin clases todavía. Haz clic en "+ Nueva Clase".</p>';
+  return c.classes.map((cls,idx)=>{
+    const keyEnc=encodeURIComponent(courseKey);
+    return `
     <div class="cls-row">
       <span class="cls-num">${cls.id}</span>
       <div class="cls-info">
         <div class="cls-title">${cls.title}</div>
         <div class="cls-desc">${cls.desc||'Sin descripción'}</div>
+        <div style="display:flex;gap:.4rem;margin-top:3px;flex-wrap:wrap">
+          ${cls.zoomUrl?`<span style="font-size:.65rem;background:#dbeafe;color:#1e40af;padding:2px 6px;border-radius:4px">🎥 Zoom</span>`:''}
+          ${cls.recordedUrl?`<span style="font-size:.65rem;background:#dcfce7;color:#166534;padding:2px 6px;border-radius:4px">🎬 Grabada</span>`:''}
+          ${cls.docs&&cls.docs.length?`<span style="font-size:.65rem;background:#fef9c3;color:#854d0e;padding:2px 6px;border-radius:4px">📎 ${cls.docs.length} doc(s)</span>`:''}
+        </div>
       </div>
       <span class="cls-week">Sem ${cls.week}</span>
-      <button class="btn-icon" onclick="openEditClass('${encodeURIComponent(courseKey)}',${idx})" title="Editar clase">✏️</button>
-      <button class="btn-icon danger" onclick="deleteClass('${encodeURIComponent(courseKey)}',${idx})" title="Eliminar clase">🗑️</button>
+      <div style="display:flex;gap:.3rem">
+        <button class="btn-icon" onclick="openEditClass('${keyEnc}',${idx})" title="Editar">✏️</button>
+        <button class="btn-icon" onclick="toggleDocPanel('${keyEnc}',${idx})" title="Documentos">📎</button>
+        <button class="btn-icon danger" onclick="deleteClass('${keyEnc}',${idx})" title="Eliminar">🗑️</button>
+      </div>
     </div>
-    <div class="cls-edit" id="clsedit-${encodeURIComponent(courseKey)}-${idx}">
-      <div style="font-family:'Nunito Sans',sans-serif;font-weight:800;font-size:.78rem;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.6rem">✏️ Editando Clase ${cls.id}</div>
+    <!-- Edit class panel -->
+    <div class="cls-edit" id="clsedit-${keyEnc}-${idx}">
+      <div style="font-family:'Nunito Sans',sans-serif;font-weight:800;font-size:.78rem;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.6rem">✏️ Clase ${cls.id}: ${cls.title}</div>
       <div class="f2col">
-        <div class="cf-group"><label>Semana</label><input type="number" id="ecl-week-${encodeURIComponent(courseKey)}-${idx}" value="${cls.week}" min="1"/></div>
-        <div class="cf-group"><label>ID Video YouTube</label><input id="ecl-vid-${encodeURIComponent(courseKey)}-${idx}" value="${cls.videoId||''}" placeholder="opcional"/></div>
+        <div class="cf-group"><label>Semana</label><input type="number" id="ecl-week-${keyEnc}-${idx}" value="${cls.week}"/></div>
+        <div class="cf-group"><label>ID Video YouTube</label><input id="ecl-vid-${keyEnc}-${idx}" value="${cls.videoId||''}" placeholder="opcional"/></div>
       </div>
-      <div class="cf-group"><label>Título *</label><input id="ecl-title-${encodeURIComponent(courseKey)}-${idx}" value="${cls.title}"/></div>
-      <div class="cf-group"><label>Descripción</label><textarea id="ecl-desc-${encodeURIComponent(courseKey)}-${idx}">${cls.desc||''}</textarea></div>
+      <div class="cf-group"><label>Título *</label><input id="ecl-title-${keyEnc}-${idx}" value="${cls.title}"/></div>
+      <div class="cf-group"><label>Descripción</label><textarea id="ecl-desc-${keyEnc}-${idx}">${cls.desc||''}</textarea></div>
+      <div class="zoom-row">
+        <div class="cf-group"><label>🎥 URL Zoom / Meet (clase en vivo)</label><input id="ecl-zoom-${keyEnc}-${idx}" value="${cls.zoomUrl||''}" placeholder="https://zoom.us/j/..."/></div>
+        <div class="cf-group"><label>🎬 URL Clase Grabada</label><input id="ecl-rec-${keyEnc}-${idx}" value="${cls.recordedUrl||''}" placeholder="https://drive.google.com/... o YouTube URL"/></div>
+      </div>
       <div class="uform-actions">
-        <button class="btn-sm orange" onclick="saveEditClass('${encodeURIComponent(courseKey)}',${idx})">💾 Guardar</button>
-        <button class="btn-sm ghost" onclick="document.getElementById('clsedit-${encodeURIComponent(courseKey)}-${idx}').classList.remove('open')">Cancelar</button>
+        <button class="btn-sm orange" onclick="saveEditClass('${keyEnc}',${idx})">💾 Guardar</button>
+        <button class="btn-sm ghost" onclick="document.getElementById('clsedit-${keyEnc}-${idx}').classList.remove('open')">Cancelar</button>
       </div>
     </div>
-  `).join('');
+    <!-- Documents panel -->
+    <div class="doc-panel" id="docpanel-${keyEnc}-${idx}" style="display:none">
+      <div class="doc-panel-title">📎 Documentos de la Clase ${cls.id}</div>
+      <div class="doc-upload-row">
+        <div class="cf-group"><label>Tipo</label><select id="dt-type-${keyEnc}-${idx}" class="pinput" style="width:100%"><option value="pdf">PDF</option><option value="pptx">PPTX</option><option value="video">Video</option><option value="link">Link</option></select></div>
+        <div class="cf-group" style="grid-column:span 2"><label>Nombre del documento</label><input id="dt-name-${keyEnc}-${idx}" placeholder="Presentación Semana..." class="pinput" style="width:100%"/></div>
+        <div class="cf-group" style="grid-column:span 2"><label>URL de Google Drive</label><input id="dt-url-${keyEnc}-${idx}" placeholder="https://drive.google.com/file/d/..." class="pinput" style="width:100%"/></div>
+      </div>
+      <button class="btn-sm navy" onclick="saveDocument('${keyEnc}',${idx})">+ Agregar Documento</button>
+      <div id="doclist-${keyEnc}-${idx}" style="margin-top:.6rem"></div>
+    </div>
+    `;
+  }).join('');
 }
+
+
 
 function toggleCourseAdmin(keyEnc){
   const body=document.getElementById('cbody-'+keyEnc);
@@ -2362,8 +2590,10 @@ async function saveCourseInfo(keyEnc){
 
   if(COURSE_DATA[key]) COURSE_DATA[key].title = title;
   const catKey = Object.keys(CATALOG).find(k=>CATALOG[k].name.includes(key.split(' ')[0]))||Object.keys(CATALOG)[0];
+  const isActive = (document.getElementById('ct-active-'+keyEnc)||{value:'true'}).value;
   if(catKey && CATALOG[catKey]){
     CATALOG[catKey].price = price; CATALOG[catKey].origPrice = orig; CATALOG[catKey].desc = desc;
+    CATALOG[catKey].active = isActive !== 'false';
     if(_iconStore[keyEnc]) CATALOG[catKey].iconImg = _iconStore[keyEnc];
   }
   const pd=document.getElementById('price-display-'+catKey); if(pd)pd.textContent='$'+price.toLocaleString();
@@ -2390,15 +2620,17 @@ function openNewClass(keyEnc){
 
 function saveNewClass(keyEnc){
   const key=decodeURIComponent(keyEnc);
-  const week =parseInt(document.getElementById('ncl-week-'+keyEnc).value)||1;
-  const vid  =document.getElementById('ncl-vid-'+keyEnc).value.trim();
-  const title=document.getElementById('ncl-title-'+keyEnc).value.trim();
-  const desc =document.getElementById('ncl-desc-'+keyEnc).value.trim();
+  const week    =parseInt(document.getElementById('ncl-week-'+keyEnc).value)||1;
+  const vid     =(document.getElementById('ncl-vid-'+keyEnc)||{value:''}).value.trim();
+  const title   =document.getElementById('ncl-title-'+keyEnc).value.trim();
+  const desc    =document.getElementById('ncl-desc-'+keyEnc).value.trim();
+  const zoomUrl =(document.getElementById('ncl-zoom-'+keyEnc)||{value:''}).value.trim();
+  const recUrl  =(document.getElementById('ncl-rec-'+keyEnc)||{value:''}).value.trim();
   if(!title){toast('El título es obligatorio','err');return;}
   if(!COURSE_DATA[key]) return;
   const newId=COURSE_DATA[key].classes.length
     ? Math.max(...COURSE_DATA[key].classes.map(c=>c.id))+1 : 1;
-  COURSE_DATA[key].classes.push({id:newId,week,title,desc,videoId:vid,resources:[]});
+  COURSE_DATA[key].classes.push({id:newId,week,title,desc,videoId:vid,zoomUrl,recordedUrl:recUrl,resources:[],docs:[]});
   document.getElementById('newcls-'+keyEnc).classList.remove('open');
   document.getElementById('clslist-'+keyEnc).innerHTML=renderClassRows(key);
   renderAdminCourseList();
@@ -2419,10 +2651,12 @@ function saveEditClass(keyEnc,idx){
   const key=decodeURIComponent(keyEnc);
   const cls=COURSE_DATA[key].classes[idx];
   if(!cls)return;
-  cls.week    =parseInt(document.getElementById('ecl-week-'+keyEnc+'-'+idx).value)||1;
-  cls.videoId =document.getElementById('ecl-vid-'+keyEnc+'-'+idx).value.trim();
-  cls.title   =document.getElementById('ecl-title-'+keyEnc+'-'+idx).value.trim()||cls.title;
-  cls.desc    =document.getElementById('ecl-desc-'+keyEnc+'-'+idx).value.trim();
+  cls.week        =parseInt(document.getElementById('ecl-week-'+keyEnc+'-'+idx).value)||1;
+  cls.videoId     =(document.getElementById('ecl-vid-'+keyEnc+'-'+idx)||{value:''}).value.trim();
+  cls.title       =document.getElementById('ecl-title-'+keyEnc+'-'+idx).value.trim()||cls.title;
+  cls.desc        =document.getElementById('ecl-desc-'+keyEnc+'-'+idx).value.trim();
+  cls.zoomUrl     =(document.getElementById('ecl-zoom-'+keyEnc+'-'+idx)||{value:''}).value.trim();
+  cls.recordedUrl =(document.getElementById('ecl-rec-'+keyEnc+'-'+idx)||{value:''}).value.trim();
   document.getElementById('clsedit-'+keyEnc+'-'+idx).classList.remove('open');
   document.getElementById('clslist-'+keyEnc).innerHTML=renderClassRows(key);
   const _cId2 = Object.keys(CATALOG).find(k=>CATALOG[k].name.includes(key.split(' ')[0]))||key.toLowerCase().replace(/[^a-z0-9]/g,'_');
@@ -2541,12 +2775,14 @@ async function loadCoursesFromSheet(){
       const courseName = courseEntry.sheetName;
       if(!COURSE_DATA[courseName]) COURSE_DATA[courseName] = { title: courseEntry.name, classes:[] };
       COURSE_DATA[courseName].classes.push({
-        id:       parseInt(cls.class_id) || 0,
-        week:     parseInt(cls.week)     || 1,
-        title:    cls.title  || '',
-        desc:     cls.desc   || '',
-        videoId:  cls.video_id || '',
-        resources:[]
+        id:          parseInt(cls.class_id) || 0,
+        week:        parseInt(cls.week)     || 1,
+        title:       cls.title        || '',
+        desc:        cls.desc         || '',
+        videoId:     cls.video_id     || '',
+        zoomUrl:     cls.zoom_url     || '',
+        recordedUrl: cls.recorded_url || '',
+        resources:[], docs:[]
       });
       COURSE_DATA[courseName].classes.sort((a,b) => a.id - b.id);
     });
@@ -2654,7 +2890,8 @@ async function saveCourseToSheet(keyEnc, courseId){
   try{
     const r = await callAppsScript({
       action:'saveCourse', course_id:courseId, name:key,
-      title, description:desc, icon_b64:iconB64, price, orig_price:orig, active:'true'
+      title, description:desc, icon_b64:iconB64, price, orig_price:orig,
+      active: (CATALOG[Object.keys(CATALOG).find(k=>CATALOG[k].sheetName===key||CATALOG[k].name.includes(key.split(' ')[0]))]||{active:true}).active
     });
     if(r && r.success){
       if(dot){ dot.className='sync-dot synced'; dot.title='Guardado en Google Sheets'; }
@@ -2670,7 +2907,9 @@ async function saveClassToSheet(courseId, cls){
   try{
     const r = await callAppsScript({
       action:'saveClass', course_id:courseId, class_id:cls.id,
-      week:cls.week, title:cls.title, desc:cls.desc||'', video_id:cls.videoId||''
+      week:cls.week, title:cls.title, desc:cls.desc||'',
+      video_id:cls.videoId||'', zoom_url:cls.zoomUrl||'',
+      recorded_url:cls.recordedUrl||''
     });
     return r && r.success;
   } catch(e){ return false; }
