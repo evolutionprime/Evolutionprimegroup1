@@ -970,7 +970,7 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
       <button class="btn-send" onclick="doLogin()" id="btn-do-login">Iniciar Sesión</button>
       <div style="margin-top:.9rem;display:flex;align-items:center;justify-content:space-between">
         <p style="font-size:.78rem;color:var(--muted)">¿No tienes cuenta? <a href="#contacto" onclick="closeLogin()" style="color:var(--orange);font-weight:700">Contáctanos</a></p>
-        <button onclick="testConnection()" style="background:none;border:none;color:var(--muted);font-size:.72rem;cursor:pointer;text-decoration:underline;font-family:'Nunito Sans',sans-serif">🔧 Probar conexión</button>
+<!-- Probar conexión eliminado del login. Solo disponible en el panel admin -->
       </div>
     </div>
   </div>
@@ -1204,9 +1204,10 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
               Empieza con <code>pk_test_...</code> (pruebas) o <code>pk_live_...</code> (producción).<br/>
               Ve a: <a href="https://dashboard.stripe.com/apikeys" target="_blank" style="color:var(--orange);font-weight:700">dashboard.stripe.com/apikeys →</a>
               <input class="spk-inp" id="spk-inp" placeholder="pk_test_..." />
-              <div style="display:flex;gap:.5rem;margin-top:.6rem">
+              <div style="display:flex;gap:.5rem;margin-top:.6rem;flex-wrap:wrap">
                 <button class="btn-sm navy" onclick="saveStripeKey()">💾 Guardar Clave</button>
                 <a href="https://dashboard.stripe.com/register" target="_blank" style="font-size:.75rem;color:var(--orange);font-weight:700;align-self:center">Crear cuenta Stripe →</a>
+                <button class="btn-sm ghost" onclick="testConnection()" style="font-size:.72rem">🔧 Probar conexión al servidor</button>
               </div>
             </div>
             <hr class="adiv"/>
@@ -1252,7 +1253,7 @@ if(location.protocol === 'file:'){
 // Option A: Paste your Apps Script URL directly here:
 //   const SCRIPT_URL = 'https://script.google.com/macros/s/YOUR_ID/exec';
 // Option B: Set it from the login screen (recommended — no code edit needed)
-let SCRIPT_URL = localStorage.getItem('epg_script_url') || '';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzrcXeOviMtaJeFF9Ko70tenskmIPcSWy4bXDL8zLzicrh4OLZf9fbMF6K0ALx7phyxAw/exec';
 
 // Demo users — replaced by live sheet when SCRIPT_URL is set
 // DEMO_USERS — solo para pruebas locales sin SCRIPT_URL configurada
@@ -1275,16 +1276,19 @@ let driveResources={};// {classId:[{type,name,url}]}
 // ── LOGIN ──
 function openLogin(){
   document.getElementById('login-modal').classList.add('on');
-  // Show setup notice if SCRIPT_URL not configured
+  // Hide setup notice — SCRIPT_URL always configured
   const notice = document.getElementById('setup-notice');
-  const inp = document.getElementById('script-url-inp');
-  if(!SCRIPT_URL){
-    notice.style.display='block';
-    if(inp) inp.value='';
-  } else {
-    notice.style.display='none';
-  }
-  setTimeout(()=>document.getElementById(SCRIPT_URL?'lu':'script-url-inp').focus(),80);
+  if(notice) notice.style.display='none';
+  // Clear fields every time the modal opens
+  const luEl = document.getElementById('lu');
+  const lpEl = document.getElementById('lp');
+  if(luEl) luEl.value = '';
+  if(lpEl) lpEl.value = '';
+  const errEl = document.getElementById('login-err');
+  if(errEl) errEl.style.display = 'none';
+  const dbgEl = document.getElementById('login-debug');
+  if(dbgEl) dbgEl.style.display = 'none';
+  setTimeout(()=>{ const f=document.getElementById('lu'); if(f)f.focus(); },80);
 }
 function closeLogin(){document.getElementById('login-modal').classList.remove('on');document.getElementById('login-err').style.display='none'}
 
@@ -1677,11 +1681,21 @@ function logout(){
   clearSession();
   currentUser = null;
 
-  // Full UI reset via shared function
+  // Full UI reset
   resetPortalUI();
   document.getElementById('portal-user').textContent = 'Estudiante';
   document.getElementById('portal').style.display = 'none';
   document.body.style.overflow = '';
+
+  // Clear login form fields so they appear blank on next login
+  const luEl = document.getElementById('lu');
+  const lpEl = document.getElementById('lp');
+  if(luEl) luEl.value = '';
+  if(lpEl) lpEl.value = '';
+  const errEl = document.getElementById('login-err');
+  if(errEl) errEl.style.display = 'none';
+  const dbgEl = document.getElementById('login-debug');
+  if(dbgEl) dbgEl.style.display = 'none';
 }
 
 function buildPortalTabs(courses,role){
@@ -2709,44 +2723,70 @@ async function loadPriceLog(){
 }
 
 // ── INIT ──
-document.getElementById('login-modal').addEventListener('click',function(e){if(e.target===this)closeLogin()});
+// Login modal — NO se cierra al hacer clic fuera. Solo con el botón X.
 document.getElementById('co-modal').addEventListener('click',function(e){if(e.target===this)closeCheckout()});
 document.getElementById('portal').addEventListener('contextmenu',e=>e.preventDefault());
 
 // ── LOAD COURSES ON PAGE LOAD (public, no login needed) ─────────
 // The courses grid on the main page is always loaded from Sheets
 (function initPublicPage(){
-  if(!SCRIPT_URL) return;
-  // Load public courses (no auth required)
+  const CACHE_KEY = 'epg_courses_cache';
+  const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
+
+  // Helper: build CATALOG/COURSE_DATA from raw response data
+  function applyCoursesData(d){
+    (d.courses||[]).forEach(c => {
+      if(String(c.active).toLowerCase()==='false') return;
+      CATALOG[c.course_id] = {
+        id: c.course_id, name: c.title||c.name, desc: c.description||'',
+        icon:'📚', iconImg: c.icon_b64||'',
+        price: parseFloat(c.price)||0, origPrice: parseFloat(c.orig_price)||0,
+        active: true, sheetName: c.name
+      };
+      COURSE_DATA[c.name] = { title: c.title||c.name, classes:[] };
+    });
+    (d.classes||[]).forEach(cls => {
+      const ce = Object.values(CATALOG).find(c=>c.id===cls.course_id);
+      if(!ce) return;
+      if(!COURSE_DATA[ce.sheetName]) COURSE_DATA[ce.sheetName]={title:ce.name,classes:[]};
+      COURSE_DATA[ce.sheetName].classes.push({
+        id:parseInt(cls.class_id)||0, week:parseInt(cls.week)||1,
+        title:cls.title||'', desc:cls.desc||'', videoId:'', resources:[]
+      });
+      COURSE_DATA[ce.sheetName].classes.sort((a,b)=>a.id-b.id);
+    });
+    courseOpts = Object.values(CATALOG).map(c=>c.name);
+    updateContactSelect();
+    renderCoursesGrid(Object.values(CATALOG));
+  }
+
+  // Try cache first → show instantly, then refresh in background
+  try{
+    const cached = localStorage.getItem(CACHE_KEY);
+    if(cached){
+      const {data, ts} = JSON.parse(cached);
+      if(data && (Date.now() - ts) < CACHE_TTL){
+        applyCoursesData(data); // instant render from cache
+        // Refresh in background silently after 2s
+        setTimeout(()=>{
+          if(!SCRIPT_URL) return;
+          callAppsScript({action:'getPublicCourses'})
+            .then(d=>{ if(d&&!d.error){ localStorage.setItem(CACHE_KEY,JSON.stringify({data:d,ts:Date.now()})); applyCoursesData(d); }})
+            .catch(()=>{});
+        }, 2000);
+        return; // Don't block on this
+      }
+    }
+  }catch(e){}
+
+  // No cache or expired → fetch from Sheets
+  if(!SCRIPT_URL){ renderCoursesGrid([]); return; }
+
   callAppsScript({action:'getPublicCourses'})
     .then(d => {
-      if(!d || d.error) return;
-      // Build minimal CATALOG and COURSE_DATA for public grid
-      (d.courses||[]).forEach(c => {
-        if(String(c.active).toLowerCase()==='false') return;
-        CATALOG[c.course_id] = {
-          id: c.course_id, name: c.title||c.name, desc: c.description||'',
-          icon:'📚', iconImg: c.icon_b64||'',
-          price: parseFloat(c.price)||0, origPrice: parseFloat(c.orig_price)||0,
-          active: true, sheetName: c.name
-        };
-        COURSE_DATA[c.name] = { title: c.title||c.name, classes:[] };
-      });
-      (d.classes||[]).forEach(cls => {
-        const ce = Object.values(CATALOG).find(c=>c.id===cls.course_id);
-        if(!ce) return;
-        if(!COURSE_DATA[ce.sheetName]) COURSE_DATA[ce.sheetName]={title:ce.name,classes:[]};
-        COURSE_DATA[ce.sheetName].classes.push({
-          id:parseInt(cls.class_id)||0, week:parseInt(cls.week)||1,
-          title:cls.title||'', desc:cls.desc||'', videoId:'', resources:[]
-        });
-        COURSE_DATA[ce.sheetName].classes.sort((a,b)=>a.id-b.id);
-      });
-      // Update contact form dropdown
-      courseOpts = Object.values(CATALOG).map(c=>c.name);
-      updateContactSelect();
-      // Render the public grid
-      renderCoursesGrid(Object.values(CATALOG));
+      if(!d || d.error){ renderCoursesGrid([]); return; }
+      try{ localStorage.setItem(CACHE_KEY, JSON.stringify({data:d, ts:Date.now()})); }catch(e){}
+      applyCoursesData(d);
     })
     .catch(() => renderCoursesGrid([]));
 })();
