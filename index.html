@@ -1386,34 +1386,26 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
 
 <script>
 // ══════════════════════════════════════════════
-//  EVOLUTION PRIME GROUP — Core JS
+//  EVOLUTION PRIME GROUP — Core JS  v2.8
 // ══════════════════════════════════════════════
-const SHEET_ID='1mlu9U2j52sl75jQ6bU1-ER3aOJG4FHrtebOYsPOQlCQ';
 
-// file:// banner removed
-// SET THIS after deploying your Google Apps Script (see security guide below)
-// ── SCRIPT URL CONFIGURATION ──────────────────────────────
-// Option A: Paste your Apps Script URL directly here:
-//   const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzrcXeOviMtaJeFF9Ko70tenskmIPcSWy4bXDL8zLzicrh4OLZf9fbMF6K0ALx7phyxAw/exec';
+// ── CONFIGURACIÓN GLOBAL ──────────────────────────────────────
+const SHEET_ID   = '1mlu9U2j52sl75jQ6bU1-ER3aOJG4FHrtebOYsPOQlCQ';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzrcXeOviMtaJeFF9Ko70tenskmIPcSWy4bXDL8zLzicrh4OLZf9fbMF6K0ALx7phyxAw/exec';
+const DRIVE_FOLDER_ID = '1rcEHkWYerJvEg4teKrOtZ4yBkyVx3Jis';
 
-// Demo users — replaced by live sheet when SCRIPT_URL is set
-// DEMO_USERS — solo para pruebas locales sin SCRIPT_URL configurada
-// En producción, TODA la autenticación va al Google Sheet
-const DEMO_USERS=[];
-
-// COURSE_DATA — se carga desde Google Sheets al iniciar sesión como admin
-// o al abrir el portal de estudiante
-let COURSE_DATA={};
-
-// CATALOG — se carga desde Google Sheets al iniciar sesión
-let CATALOG={};
-
-let currentUser=null, cart=[], stripeInst=null, stripeCard=null;
-let stripePK=localStorage.getItem('epg_spk')||'';
-let liveLinkEnc=localStorage.getItem('epg_live')||btoa('https://zoom.us/j/CONFIGURAR');
-let courseOpts=[] // Se carga desde Google Sheets;
-let driveResources={};// {classId:[{type,name,url}]}
-
+// ── ESTADO GLOBAL ─────────────────────────────────────────────
+const DEMO_USERS  = [];          // Sin usuarios demo — todo desde Sheets
+let COURSE_DATA   = {};          // Cargado desde Sheets
+let CATALOG       = {};          // Cargado desde Sheets
+let courseOpts    = [];          // Cargado desde Sheets
+let driveResources= {};
+let currentUser   = null;
+let cart          = [];
+let stripeInst    = null;
+let stripeCard    = null;
+let stripePK      = localStorage.getItem('epg_spk') || '';
+let liveLinkEnc   = localStorage.getItem('epg_live') || btoa('https://zoom.us/j/CONFIGURAR');
 // ── LOGIN ──
 function openLogin(){
   document.getElementById('login-modal').classList.add('on');
@@ -1618,7 +1610,6 @@ async function deleteCourse(keyEnc){
 // ================================================================
 // PDF UPLOAD TO GOOGLE DRIVE VIA APPS SCRIPT
 // ================================================================
-const DRIVE_FOLDER_ID = '1rcEHkWYerJvEg4teKrOtZ4yBkyVx3Jis';
 
 function handlePdfDrop(event, keyEnc, idx){
   event.preventDefault();
