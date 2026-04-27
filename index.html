@@ -1132,6 +1132,7 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
       <div class="pay-ok" id="pay-ok" style="display:none">
         <div class="ok-ico">🎉</div>
         <h3>¡Pago Exitoso!</h3>
+        <div id="pay-ok-msg" style="font-size:.88rem;line-height:1.7;margin:.5rem 0 1rem"></div>
         <p>Tu inscripción fue procesada. Recibirás un correo con tus datos de acceso.<br/><br/><strong style="color:var(--navy)">Bienvenido a Evolution Prime Group.</strong></p>
         <br/><button class="btn-primary" onclick="closeCheckout()" style="margin:0 auto">Cerrar</button>
       </div>
@@ -1273,6 +1274,7 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
           <div style="display:flex;gap:.5rem;margin-bottom:1.2rem;flex-wrap:wrap" id="cfg-subtabs">
             <button class="atab on" onclick="cfgTab('users',this)">👤 Usuarios</button>
             <button class="atab"    onclick="cfgTab('stripe',this)">💳 Stripe</button>
+            <button class="atab"    onclick="cfgTab('emailcfg',this)">📧 Correo Bienvenida</button>
             <button class="atab"    onclick="cfgTab('contactform',this)">📝 Formulario</button>
           </div>
 
@@ -1312,9 +1314,17 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
 
           <!-- STRIPE -->
           <div id="cfg-stripe" class="cfg-sec" style="display:none">
+            <!-- Stripe TEST MODE instructions -->
+            <div style="background:#fffbeb;border:1px solid #f59e0b;border-radius:10px;padding:1rem 1.2rem;margin-bottom:1rem;font-size:.8rem;color:#92400e;line-height:1.7">
+              <strong>🧪 Modo de Pruebas (Test Mode)</strong><br/>
+              Para probar pagos usa la clave que empieza con <code>pk_test_...</code>.<br/>
+              <strong>Tarjeta de prueba:</strong> <code>4242 4242 4242 4242</code> · Vence: cualquier fecha futura · CVC: cualquier 3 dígitos<br/>
+              Las pruebas en GitHub Pages funcionan perfectamente con Stripe Test Mode.<br/>
+              <strong>Para producción</strong> cambia a la clave <code>pk_live_...</code>.
+            </div>
             <div class="stripe-cfg">
               <strong>⚙️ Clave Pública de Stripe (Publishable Key)</strong>
-              Empieza con <code>pk_test_...</code> o <code>pk_live_...</code>.<br/>
+              Empieza con <code>pk_test_...</code> (pruebas) o <code>pk_live_...</code> (producción).<br/>
               Ve a: <a href="https://dashboard.stripe.com/apikeys" target="_blank" style="color:var(--orange);font-weight:700">dashboard.stripe.com/apikeys →</a>
               <input class="spk-inp" id="spk-inp" placeholder="pk_test_..." />
               <div style="display:flex;gap:.5rem;margin-top:.6rem;flex-wrap:wrap">
@@ -1328,6 +1338,34 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
             <p style="color:var(--muted);font-size:.75rem;margin-bottom:.5rem">Este link es el predeterminado. Cada clase puede tener su propio link de Zoom en la sección de cursos.</p>
             <input class="spk-inp" id="live-link-inp" placeholder="https://zoom.us/j/... o Google Meet URL" style="margin-bottom:.5rem"/>
             <button class="btn-sm navy" onclick="saveLiveLink()">💾 Guardar Link</button>
+          </div>
+
+          <!-- EMAIL CONFIG -->
+          <div id="cfg-emailcfg" class="cfg-sec" style="display:none">
+            <p style="color:var(--muted);font-size:.83rem;margin-bottom:1rem">Configura el correo de bienvenida que reciben los estudiantes al comprar un curso. Se guarda en Google Sheets.</p>
+            <div class="cf-group">
+              <label>Asunto del correo *</label>
+              <input id="ec-subject" placeholder="Bienvenido a Evolution Prime Group"/>
+            </div>
+            <div class="cf-group">
+              <label>Cuerpo del correo</label>
+              <p style="font-size:.68rem;color:var(--muted);margin-bottom:4px">Variables disponibles: <code>{nombre}</code> <code>{email}</code> <code>{password}</code> <code>{validation_link}</code> <code>{cursos}</code></p>
+              <textarea id="ec-body" style="min-height:160px" placeholder="Hola {nombre}, bienvenido..."></textarea>
+            </div>
+            <div class="cf-group">
+              <label>Firma digital</label>
+              <textarea id="ec-signature" style="min-height:80px" placeholder="Evolution Prime Group LLC&#10;www.evolutionprimegroup.com"></textarea>
+            </div>
+            <div class="cf-group">
+              <label>URL del Logo (Google Drive — vista pública)</label>
+              <input id="ec-logo" placeholder="https://drive.google.com/uc?id=..."/>
+              <p style="font-size:.68rem;color:var(--muted);margin-top:3px">El logo se adjunta al correo. Debe ser una URL pública de Drive o imagen.</p>
+            </div>
+            <div id="ec-status" style="display:none;margin-top:.5rem;font-size:.78rem;padding:8px 12px;border-radius:7px"></div>
+            <div class="uform-actions" style="margin-top:1rem">
+              <button class="btn-sm navy" onclick="loadEmailConfig()">🔄 Cargar Configuración</button>
+              <button class="btn-sm orange" onclick="saveEmailConfig()">💾 Guardar Correo</button>
+            </div>
           </div>
 
           <!-- CONTACT FORM -->
@@ -1942,6 +1980,52 @@ async function saveFollowup(row){
   }
 }
 
+// ================================================================
+// EMAIL CONFIG — Admin
+// ================================================================
+async function loadEmailConfig(){
+  const st = document.getElementById('ec-status');
+  if(st){ st.textContent='⏳ Cargando...'; st.style.display='block'; st.style.background='var(--off)'; st.style.color='var(--muted)'; }
+  if(!SCRIPT_URL) return;
+  try{
+    const d = await callAppsScript({action:'getEmailConfig'});
+    const cfg = d.config || {};
+    const set = (id,key) => { const el=document.getElementById(id); if(el) el.value=cfg[key]||''; };
+    set('ec-subject',   'welcome_subject');
+    set('ec-body',      'welcome_body');
+    set('ec-signature', 'welcome_signature');
+    set('ec-logo',      'logo_drive_url');
+    if(st){ st.textContent='✅ Configuración cargada.'; st.style.background='#dcfce7'; st.style.color='#166534'; }
+    setTimeout(()=>{ if(st) st.style.display='none'; }, 3000);
+  } catch(e){
+    if(st){ st.textContent='❌ Error: '+e.message; st.style.background='#fef2f2'; st.style.color='#991b1b'; }
+  }
+}
+
+async function saveEmailConfig(){
+  const st = document.getElementById('ec-status');
+  const get = id => (document.getElementById(id)||{value:''}).value;
+  if(st){ st.textContent='⏳ Guardando...'; st.style.display='block'; st.style.background='var(--off)'; st.style.color='var(--muted)'; }
+  if(!SCRIPT_URL){ if(st){st.textContent='❌ Sin conexión.';} return; }
+  try{
+    const r = await callAppsScript({
+      action:              'saveEmailConfig',
+      welcome_subject:     get('ec-subject'),
+      welcome_body:        get('ec-body'),
+      welcome_signature:   get('ec-signature'),
+      logo_drive_url:      get('ec-logo')
+    });
+    if(r && r.success){
+      if(st){ st.textContent='✅ Configuración guardada en Google Sheets.'; st.style.background='#dcfce7'; st.style.color='#166534'; }
+      toast('✅ Configuración de correo guardada');
+    } else {
+      if(st){ st.textContent='❌ '+(r?.error||'Error al guardar'); st.style.background='#fef2f2'; st.style.color='#991b1b'; }
+    }
+  } catch(e){
+    if(st){ st.textContent='❌ Error: '+e.message; st.style.background='#fef2f2'; st.style.color='#991b1b'; }
+  }
+}
+
 // ── CONNECTION TEST ──
 function testConnection() {
   const dbg = document.getElementById('login-debug');
@@ -2260,15 +2344,76 @@ function logout(){
 }
 
 function buildPortalTabs(courses,role){
-  const t=document.getElementById('ptabs');const c=document.getElementById('portal-content');
+  const t=document.getElementById('ptabs');
+  const c=document.getElementById('portal-content');
   t.innerHTML='';
-  if(!courses.length){c.innerHTML='<p style="color:var(--muted)">No tienes cursos asignados. Contáctanos para activar tu acceso.</p>';return}
-  courses.forEach((cn,i)=>{
-    const b=document.createElement('button');b.className='ptab'+(i===0?' on':'');b.textContent=cn;
-    b.onclick=()=>{document.querySelectorAll('.ptab').forEach(x=>x.classList.remove('on'));b.classList.add('on');renderCourse(cn)};
-    t.appendChild(b);
-  });
-  renderCourse(courses[0]);
+
+  // Add course tabs
+  if(courses.length){
+    courses.forEach((cn,i)=>{
+      const b=document.createElement('button');
+      b.className='ptab'+(i===0?' on':'');
+      b.textContent=cn;
+      b.onclick=()=>{
+        document.querySelectorAll('.ptab').forEach(x=>x.classList.remove('on'));
+        b.classList.add('on');
+        renderCourse(cn);
+      };
+      t.appendChild(b);
+    });
+    renderCourse(courses[0]);
+  } else {
+    c.innerHTML='<p style="color:var(--muted);padding:1rem 0">No tienes cursos asignados aún.</p>';
+  }
+
+  // Add "Adquirir Cursos" tab for students
+  if(role==='student'){
+    const buyBtn = document.createElement('button');
+    buyBtn.className = 'ptab';
+    buyBtn.innerHTML = '🛍️ Adquirir Más Cursos';
+    buyBtn.style.cssText = 'border:2px solid var(--orange);color:var(--orange);font-weight:800';
+    buyBtn.onclick = ()=>{
+      document.querySelectorAll('.ptab').forEach(x=>x.classList.remove('on'));
+      buyBtn.classList.add('on');
+      renderBuyCourses(c);
+    };
+    t.appendChild(buyBtn);
+  }
+}
+
+// Render available courses for purchase inside student portal
+function renderBuyCourses(container){
+  const courses = Object.values(CATALOG).filter(c => c.active !== false && c.active !== 'false');
+  if(!courses.length){
+    container.innerHTML='<div style="text-align:center;padding:3rem 1rem;color:var(--muted)"><div style="font-size:2rem;margin-bottom:.5rem">📚</div><p>No hay cursos disponibles en este momento.</p></div>';
+    return;
+  }
+  container.innerHTML=`
+    <div style="padding:1rem 0">
+      <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--navy);margin-bottom:.3rem">Cursos Disponibles</h3>
+      <p style="color:var(--muted);font-size:.85rem;margin-bottom:1.5rem">Adquiere acceso a más programas de formación.</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem">
+        ${courses.map(c=>`
+          <div style="background:var(--white);border-radius:12px;border:1px solid var(--mid);overflow:hidden;box-shadow:var(--shadow)">
+            <div style="background:var(--navy);padding:1.2rem;text-align:center">
+              <div style="font-size:2rem;margin-bottom:.3rem">${c.icon||'📚'}</div>
+              <div style="color:white;font-family:'Nunito Sans',sans-serif;font-weight:800;font-size:.9rem">${c.name}</div>
+            </div>
+            <div style="padding:1rem">
+              <p style="font-size:.8rem;color:var(--muted);margin-bottom:.75rem">${c.desc||''}</p>
+              <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem">
+                <span style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:var(--navy)">$${(c.price||0).toLocaleString()}</span>
+                ${c.origPrice>c.price?`<span style="font-size:.8rem;color:var(--muted);text-decoration:line-through">$${(c.origPrice||0).toLocaleString()}</span>`:''}
+              </div>
+              <button onclick="addToCart('${c.id}');openCart()" 
+                style="width:100%;background:var(--orange);color:white;border:none;border-radius:8px;padding:10px;font-family:'Nunito Sans',sans-serif;font-weight:800;font-size:.82rem;cursor:pointer;transition:opacity .2s"
+                onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+                🛒 Agregar al Carrito
+              </button>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>`;
 }
 
 function renderCourse(name){
@@ -2488,6 +2633,7 @@ function cfgTab(id, btn){
   if(sec) sec.style.display='block';
   if(id==='prices') renderPriceGrid();
   if(id==='drive')  renderResourceList();
+  if(id==='emailcfg') loadEmailConfig();
   if(id==='stripe'){
     const i=document.getElementById('spk-inp');if(i)i.value=stripePK;
     const li=document.getElementById('live-link-inp');
@@ -2668,32 +2814,74 @@ function initStripe(){
 }
 
 async function processPayment(){
-  const n=document.getElementById('pay-n').value.trim();
-  const a=document.getElementById('pay-a').value.trim();
-  const e=document.getElementById('pay-e').value.trim();
-  const t=document.getElementById('pay-t').value.trim();
-  const er=document.getElementById('pay-err');
+  const nombre  = document.getElementById('pay-n').value.trim();
+  const apellido= document.getElementById('pay-a').value.trim();
+  const email   = document.getElementById('pay-e').value.trim().toLowerCase();
+  const telefono= document.getElementById('pay-t').value.trim();
+  const er      = document.getElementById('pay-err');
+  const btn     = document.getElementById('btn-pay');
   er.style.display='none';
-  if(!n||!a||!e||!t){er.textContent='Completa todos tus datos personales.';er.style.display='block';return}
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)){er.textContent='Correo inválido.';er.style.display='block';return}
-  if(!stripeInst||!stripeCard){er.textContent='Sistema de pago no configurado.';er.style.display='block';return}
-  const btn=document.getElementById('btn-pay');
-  btn.disabled=true;btn.textContent='⏳ Procesando...';
-  // NOTE: Production flow requires a server-side PaymentIntent.
-  // 1. Your server creates PaymentIntent → returns client_secret
-  // 2. Client calls: stripe.confirmCardPayment(client_secret, {payment_method:{card:stripeCard,billing_details:{name,email}}})
-  // Demo: validate card with createPaymentMethod
+
+  if(!nombre||!apellido||!email||!telefono){
+    er.textContent='Completa todos tus datos personales.'; er.style.display='block'; return;
+  }
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+    er.textContent='Correo electrónico inválido.'; er.style.display='block'; return;
+  }
+  if(!stripeInst||!stripeCard){
+    er.textContent='Sistema de pago no configurado. Contacta al administrador.'; er.style.display='block'; return;
+  }
+
+  // Check if email already active student
+  btn.disabled=true; btn.textContent='⏳ Verificando...';
+  if(SCRIPT_URL){
+    try{
+      const check = await callAppsScript({action:'checkEmail', email});
+      if(check && check.active){
+        er.innerHTML='⚠️ El correo <strong>'+email+'</strong> ya tiene una cuenta activa.<br/>'
+          +'<a href="#" onclick="closeCheckout();openLogin();return false" style="color:var(--orange);font-weight:700">Inicia sesión en el portal</a> para adquirir cursos adicionales.';
+        er.style.display='block';
+        btn.disabled=false; btn.innerHTML='🔒 Pagar Ahora — $'+cartTotal().toLocaleString();
+        return;
+      }
+    }catch(e){ /* continue */ }
+  }
+  btn.textContent='⏳ Procesando pago...';
+
   try{
-    const{paymentMethod,error}=await stripeInst.createPaymentMethod({type:'card',card:stripeCard,billing_details:{name:`${n} ${a}`,email:e,phone:t}});
-    if(error){document.getElementById('stripe-err').textContent=error.message;btn.disabled=false;btn.innerHTML='🔒 Pagar Ahora — $'+cartTotal().toLocaleString();return}
-    // Save order
-    if(SCRIPT_URL){
-      try{await authPost({action:'addOrder',name:`${n} ${a}`,email:e,phone:t,courses:cart.map(c=>c.name).join(', '),total:cartTotal(),pmId:paymentMethod.id,date:new Date().toLocaleString('es-US')})}catch(x){}
+    // Stripe tokenizes card data — no card info stored on our servers
+    const {paymentMethod, error} = await stripeInst.createPaymentMethod({
+      type:'card', card:stripeCard,
+      billing_details:{name:`${nombre} ${apellido}`, email, phone:telefono}
+    });
+    if(error){
+      document.getElementById('stripe-err').textContent=error.message;
+      btn.disabled=false; btn.innerHTML='🔒 Pagar Ahora — $'+cartTotal().toLocaleString(); return;
     }
+
+    // Save order → creates student record + user account + sends validation email
+    if(SCRIPT_URL){
+      try{
+        await callAppsScript({
+          action:'addOrder', nombre, apellido, email, phone:telefono,
+          courses:cart.map(c=>c.name).join(', '), total:cartTotal(),
+          pmId:paymentMethod.id, date:new Date().toLocaleString('es-US')
+        });
+      }catch(x){ console.warn('Order save:', x); }
+    }
+
     document.getElementById('co-content').style.display='none';
     document.getElementById('pay-ok').style.display='block';
-    cart=[];updateCartUI();
-  }catch(ex){er.textContent='Error al procesar. Intenta de nuevo.';er.style.display='block';btn.disabled=false;btn.innerHTML='🔒 Pagar Ahora — $'+cartTotal().toLocaleString()}
+    const okMsg=document.getElementById('pay-ok-msg');
+    if(okMsg) okMsg.innerHTML='¡Hola <strong>'+nombre+'</strong>! Tu pago fue procesado exitosamente.<br/>'
+      +'Revisa tu correo <strong>'+email+'</strong> para validar tu cuenta y obtener tu contraseña.<br/>'
+      +'<small style="color:var(--muted)">Revisa también tu carpeta de spam.</small>';
+    cart=[]; updateCartUI();
+  }catch(ex){
+    er.textContent='Error al procesar. Intenta de nuevo.';
+    er.style.display='block'; btn.disabled=false;
+    btn.innerHTML='🔒 Pagar Ahora — $'+cartTotal().toLocaleString();
+  }
 }
 
 // ── CONTACT ──
@@ -3459,6 +3647,46 @@ async function loadPriceLog(){
 // Login modal — NO se cierra al hacer clic fuera. Solo con el botón X.
 document.getElementById('co-modal').addEventListener('click',function(e){if(e.target===this)closeCheckout()});
 document.getElementById('portal').addEventListener('contextmenu',e=>e.preventDefault());
+
+// ── HANDLE ACCOUNT VALIDATION LINK (?validate=token&email=x) ────
+(function handleValidationLink(){
+  const params = new URLSearchParams(window.location.search);
+  const token  = params.get('validate');
+  const email  = params.get('email');
+  if(!token || !email || !SCRIPT_URL) return;
+
+  // Show validation banner
+  const banner = document.createElement('div');
+  banner.id = 'validation-banner';
+  banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:var(--navy);color:white;text-align:center;padding:14px 16px;font-family:Nunito Sans,sans-serif;font-size:.88rem;font-weight:700';
+  banner.textContent = '⏳ Validando tu cuenta...';
+  document.body.appendChild(banner);
+
+  callAppsScript({action:'validateAccount', token, email})
+    .then(d => {
+      if(d.success){
+        banner.style.background = '#166534';
+        banner.innerHTML = '✅ ¡Cuenta activada exitosamente! Bienvenido/a ' + (d.name||'') +
+          '. <a href="' + window.location.pathname + '" onclick="window.history.replaceState({},'+"''"+',window.location.pathname)" '+
+          'style="color:#86efac;text-decoration:underline;margin-left:8px">Iniciar sesión →</a>';
+        // Clean URL
+        window.history.replaceState({}, '', window.location.pathname);
+      } else if(d.already_active){
+        banner.style.background = '#1e40af';
+        banner.innerHTML = '✅ Tu cuenta ya estaba activa. <a href="#" onclick="openLogin();document.getElementById('validation-banner').remove();return false" style="color:#93c5fd;text-decoration:underline;margin-left:8px">Inicia sesión →</a>';
+        window.history.replaceState({}, '', window.location.pathname);
+      } else {
+        banner.style.background = '#991b1b';
+        banner.textContent = '❌ Link de validación inválido o expirado. Contacta a soporte.';
+        setTimeout(()=>banner.remove(), 6000);
+      }
+    })
+    .catch(e => {
+      banner.style.background = '#991b1b';
+      banner.textContent = '❌ Error al validar. Intenta más tarde.';
+      setTimeout(()=>banner.remove(), 5000);
+    });
+})();
 
 // ── LOAD COURSES ON PAGE LOAD (public, no login needed) ─────────
 // The courses grid on the main page is always loaded from Sheets
