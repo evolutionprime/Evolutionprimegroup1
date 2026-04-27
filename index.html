@@ -404,6 +404,38 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
   .courses-grid,.adv-grid,.res-grid,.vals,.hero-stats,.temario-grid,.price-grid,.frow{grid-template-columns:1fr}
 }
 .nosel{user-select:none;-webkit-user-select:none}
+    /* ── PDF UPLOAD ── */
+    .pdf-upload-area{border:2px dashed var(--mid);border-radius:10px;padding:1.2rem;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;position:relative}
+    .pdf-upload-area:hover,.pdf-upload-area.drag{border-color:var(--orange);background:rgba(247,148,29,.05)}
+    .pdf-upload-area input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+    .pdf-upload-icon{font-size:2rem;margin-bottom:.4rem}
+    .pdf-upload-text{font-size:.82rem;color:var(--muted);font-weight:600}
+    .pdf-upload-text strong{color:var(--navy)}
+    .pdf-progress{height:4px;background:var(--mid);border-radius:2px;margin-top:.6rem;overflow:hidden;display:none}
+    .pdf-progress-bar{height:100%;background:var(--orange);border-radius:2px;transition:width .3s;width:0%}
+    /* ── CONTACT MANAGEMENT ── */
+    .contact-table-wrap{overflow-x:auto;margin-top:.75rem}
+    .contact-mgmt-table{width:100%;border-collapse:collapse;font-size:.78rem;min-width:900px}
+    .contact-mgmt-table th{background:var(--navy);color:white;padding:9px 11px;text-align:left;font-family:"Nunito Sans",sans-serif;font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+    .contact-mgmt-table td{padding:8px 10px;border-bottom:1px solid var(--mid);vertical-align:middle}
+    .contact-mgmt-table tr:hover td{background:#fafbff}
+    .status-badge{font-size:.65rem;font-weight:800;padding:3px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+    .status-new{background:#eff6ff;color:#1e40af}
+    .status-acquired{background:#dcfce7;color:#166534}
+    .status-not-interested{background:#fef2f2;color:#991b1b}
+    .status-follow-up{background:#fff7ed;color:#c2410c}
+    .contact-detail-panel{background:var(--white);border:1px solid var(--mid);border-radius:10px;padding:1.2rem;margin-top:.4rem;display:none}
+    .contact-detail-panel.open{display:block}
+    .follow-form-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem;margin-top:.75rem}
+    .follow-date-field{position:relative}
+    .follow-date-field input[type=text]{width:100%;padding:8px 32px 8px 10px;border:1px solid var(--mid);border-radius:7px;font-family:"Nunito Sans",sans-serif;font-size:.82rem;outline:none;transition:border-color .2s}
+    .follow-date-field input[type=text]:focus{border-color:var(--orange)}
+    .follow-date-field input[type=date]{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:none;background:transparent;width:22px;height:22px;cursor:pointer;opacity:0}
+    .follow-date-field .cal-icon{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:.9rem;pointer-events:none;color:var(--muted)}
+    .followup-date-row{display:none;margin-top:.6rem}
+    .followup-date-row.show{display:block}
+    @media(max-width:700px){.follow-form-grid{grid-template-columns:1fr}}
+
     /* ── DOCUMENT UPLOAD PANEL ── */
     .doc-panel{background:var(--off);border-radius:10px;padding:1rem;margin-top:1rem;border:1px solid var(--mid)}
     .doc-panel-title{font-family:"Nunito Sans",sans-serif;font-weight:800;font-size:.72rem;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.75rem;display:flex;align-items:center;gap:6px}
@@ -1142,8 +1174,19 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
 
         <!-- ══ CONTACTOS ══════════════════════════════════════════ -->
         <div class="asec" id="asec-contacts">
-          <div class="admin-section-title">📋 Formularios de Contacto</div>
-          <button class="btn-sm navy" onclick="loadContacts()" style="margin-bottom:.9rem">🔄 Cargar Contactos</button>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem">
+            <div class="admin-section-title" style="margin:0">📋 Gestión de Contactos</div>
+            <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+              <select id="filter-status" class="pinput" style="width:180px;font-size:.78rem" onchange="filterContacts()">
+                <option value="">Todos los estados</option>
+                <option value="nuevo">Nuevo</option>
+                <option value="adquirio">Adquirió producto</option>
+                <option value="no-interesado">No está interesado</option>
+                <option value="seguimiento">Contactar en otra fecha</option>
+              </select>
+              <button class="btn-sm navy" onclick="loadContacts()">🔄 Cargar Contactos</button>
+            </div>
+          </div>
           <div id="contacts-wrap"><p class="empty-adm">Haz clic en Cargar Contactos.</p></div>
         </div>
 
@@ -1166,8 +1209,6 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
           <div class="admin-section-title">⚙️ Configuración del Sistema</div>
           <div style="display:flex;gap:.5rem;margin-bottom:1.2rem;flex-wrap:wrap" id="cfg-subtabs">
             <button class="atab on" onclick="cfgTab('users',this)">👤 Usuarios</button>
-            <button class="atab"    onclick="cfgTab('prices',this)">💰 Precios</button>
-            <button class="atab"    onclick="cfgTab('drive',this)">📁 Drive</button>
             <button class="atab"    onclick="cfgTab('stripe',this)">💳 Stripe</button>
             <button class="atab"    onclick="cfgTab('contactform',this)">📝 Formulario</button>
           </div>
@@ -1204,28 +1245,6 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
             </div>
             <button class="btn-sm navy" onclick="loadUsers()" style="margin-bottom:.75rem">🔄 Cargar Usuarios</button>
             <div id="users-wrap"><p class="empty-adm">Haz clic en Cargar Usuarios.</p></div>
-          </div>
-
-          <!-- PRICES -->
-          <div id="cfg-prices" class="cfg-sec" style="display:none">
-            <p style="color:var(--muted);font-size:.83rem;margin-bottom:.9rem">Configura los precios. Cada cambio se registra automáticamente en el historial.</p>
-            <div class="price-grid" id="price-grid"></div>
-          </div>
-
-          <!-- DRIVE -->
-          <div id="cfg-drive" class="cfg-sec" style="display:none">
-            <div class="drive-info-box">
-              <strong>📁 Gestión de Recursos desde Google Drive</strong><br/>
-              Sube archivos a Drive → comparte como "Cualquier persona con el enlace puede ver" → copia el link y agrégalo aquí vinculado a la clase correspondiente.
-            </div>
-            <div class="drive-form">
-              <div class="fg"><label>Clase #</label><input type="number" id="dr-cls" placeholder="1" style="width:70px" class="pinput"/></div>
-              <div class="fg"><label>Tipo</label><select id="dr-type" class="pinput" style="width:90px"><option value="pdf">PDF</option><option value="pptx">PPTX</option><option value="video">Video</option><option value="link">Link</option></select></div>
-              <div class="fg" style="flex:2"><label>Nombre</label><input type="text" id="dr-name" placeholder="Presentación Semana 1..." class="pinput" style="width:100%"/></div>
-              <div class="fg" style="flex:2"><label>URL de Drive</label><input type="text" id="dr-url" placeholder="https://drive.google.com/..." class="pinput" style="width:100%"/></div>
-              <button class="btn-add-res" onclick="addResource()">+ Agregar</button>
-            </div>
-            <div id="resources-list"></div>
           </div>
 
           <!-- STRIPE -->
@@ -1541,6 +1560,289 @@ async function deleteCourse(keyEnc){
   if(catKey) delete CATALOG[catKey];
   renderAdminCourseList();
   toast('🗑️ Curso eliminado localmente. Recuerda borrarlo en Google Sheets.');
+}
+
+// ================================================================
+// PDF UPLOAD TO GOOGLE DRIVE VIA APPS SCRIPT
+// ================================================================
+const DRIVE_FOLDER_ID = '1rcEHkWYerJvEg4teKrOtZ4yBkyVx3Jis';
+
+function handlePdfDrop(event, keyEnc, idx){
+  event.preventDefault();
+  document.getElementById('pdfarea-'+keyEnc+'-'+idx)?.classList.remove('drag');
+  const file = event.dataTransfer.files[0];
+  if(file) uploadPdfToSheet(file, keyEnc, idx);
+}
+
+function handlePdfSelect(event, keyEnc, idx){
+  const file = event.target.files[0];
+  if(file) uploadPdfToSheet(file, keyEnc, idx);
+}
+
+async function uploadPdfToSheet(file, keyEnc, idx){
+  const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+  if(file.size > MAX_SIZE){ toast('⚠️ Archivo demasiado grande. Máximo 10MB.','err'); return; }
+
+  const key  = decodeURIComponent(keyEnc);
+  const cls  = COURSE_DATA[key]?.classes[idx];
+  if(!cls){ toast('Clase no encontrada.','err'); return; }
+
+  const catKey   = Object.keys(CATALOG).find(k=>CATALOG[k].sheetName===key||CATALOG[k].name.includes(key.split(' ')[0]));
+  const courseId = catKey || key.toLowerCase().replace(/[^a-z0-9]/g,'_');
+
+  // Build filename: NombreCurso_ClaseN_YYYY-MM-DD.ext
+  const now     = new Date();
+  const dateStr = now.toISOString().split('T')[0];
+  const ext     = file.name.split('.').pop();
+  const safeName= key.replace(/[^a-zA-Z0-9]/g,'_').substring(0,30);
+  const fileName= `${safeName}_Clase${cls.id}_${dateStr}.${ext}`;
+
+  // Update UI
+  const prog   = document.getElementById('pdfprog-'+keyEnc+'-'+idx);
+  const bar    = document.getElementById('pdfbar-'+keyEnc+'-'+idx);
+  const status = document.getElementById('pdfstatus-'+keyEnc+'-'+idx);
+  if(prog) prog.style.display='block';
+  if(bar)  bar.style.width='20%';
+  if(status) status.textContent='⏳ Leyendo archivo...';
+
+  if(!SCRIPT_URL){ toast('Sin conexión al servidor.','err'); return; }
+
+  try{
+    // Convert file to base64
+    const b64 = await new Promise((res,rej)=>{
+      const r = new FileReader();
+      r.onload = e => res(e.target.result.split(',')[1]);
+      r.onerror = rej;
+      r.readAsDataURL(file);
+    });
+
+    if(bar) bar.style.width='50%';
+    if(status) status.textContent='⏳ Subiendo a Google Drive...';
+
+    const result = await callAppsScript({
+      action:     'uploadFileToDrive',
+      file_b64:   b64,
+      file_name:  fileName,
+      mime_type:  file.type || 'application/pdf',
+      folder_id:  DRIVE_FOLDER_ID,
+      course_id:  courseId,
+      class_id:   cls.id,
+      week:       cls.week,
+      doc_name:   fileName,
+      doc_type:   ext
+    });
+
+    if(bar) bar.style.width='90%';
+
+    if(result && result.success){
+      if(bar) bar.style.width='100%';
+      if(status) status.innerHTML='✅ <strong>'+fileName+'</strong> subido correctamente.';
+      setTimeout(()=>{ if(prog) prog.style.display='none'; if(status) status.textContent=''; },3000);
+      toast('✅ Documento subido a Drive y registrado en Sheets');
+      loadDocumentsForClass(keyEnc, idx);
+    } else {
+      if(status) status.textContent='❌ '+(result?.error||'Error al subir. Intenta de nuevo.');
+      if(bar) bar.style.width='0%';
+      toast((result?.error||'Error al subir'),'err');
+    }
+  } catch(e){
+    if(status) status.textContent='❌ Error: '+e.message;
+    toast('Error: '+e.message,'err');
+  }
+}
+
+// ================================================================
+// CONTACT MANAGEMENT
+// ================================================================
+let _allContacts = []; // cache loaded contacts
+
+async function loadContacts(){
+  const w = document.getElementById('contacts-wrap');
+  w.innerHTML='<p class="empty-adm">⏳ Cargando contactos...</p>';
+  if(!SCRIPT_URL){ w.innerHTML='<p class="empty-adm">⚠️ Configura el SCRIPT_URL primero.</p>'; return; }
+  try{
+    const d = await callAppsScript({action:'getContacts'}) || {};
+    if(d.code==='UNAUTHORIZED'){ w.innerHTML='<p class="empty-adm">⚠️ Sesión expirada.</p>'; return; }
+    _allContacts = (d.contacts||[]).map((c,i)=>({
+      _row:   i+2, // Sheet row (1=header, 2=first data)
+      nombre: c[0]||'', email: c[1]||'', telefono: c[2]||'',
+      curso:  c[3]||'', mensaje: c[4]||'', fecha: c[5]||'',
+      estado: c[6]||'nuevo', ultima_gestion: c[7]||'',
+      fecha_contacto: c[8]||'', medio: c[9]||'', fecha_seguimiento: c[10]||''
+    }));
+    renderContactsTable(_allContacts);
+  } catch(e){
+    w.innerHTML=`<p style="color:#991b1b;font-size:.82rem">Error: ${e.message}</p>`;
+  }
+}
+
+function filterContacts(){
+  const status = document.getElementById('filter-status')?.value || '';
+  const filtered = status ? _allContacts.filter(c=>c.estado===status) : _allContacts;
+  renderContactsTable(filtered);
+}
+
+function renderContactsTable(contacts){
+  const w = document.getElementById('contacts-wrap');
+  if(!contacts.length){
+    w.innerHTML='<p class="empty-adm">No hay contactos'+( document.getElementById('filter-status')?.value ? ' con ese estado' : '')+'. <a href="#" onclick="loadContacts();return false" style="color:var(--orange)">Recargar</a></p>';
+    return;
+  }
+
+  const statusBadge = s => {
+    const map = {
+      'nuevo':          ['status-new',            'Nuevo'],
+      'adquirio':       ['status-acquired',        'Adquirió producto'],
+      'no-interesado':  ['status-not-interested',  'No interesado'],
+      'seguimiento':    ['status-follow-up',       'Seguimiento']
+    };
+    const [cls,lbl]=map[s]||['status-new','Nuevo'];
+    return `<span class="status-badge ${cls}">${lbl}</span>`;
+  };
+
+  w.innerHTML=`<div class="contact-table-wrap">
+    <table class="contact-mgmt-table">
+      <thead><tr>
+        <th>Nombre</th><th>Correo</th><th>Teléfono</th><th>Curso</th>
+        <th>Fecha</th><th>Estado</th><th>Último contacto</th><th>Seguimiento</th><th>Gestionar</th>
+      </tr></thead>
+      <tbody>
+        ${contacts.map((c,i)=>`
+          <tr>
+            <td style="font-weight:700">${c.nombre}</td>
+            <td style="font-size:.72rem">${c.email}</td>
+            <td style="font-size:.72rem">${c.telefono}</td>
+            <td style="font-size:.72rem;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${c.curso}">${c.curso}</td>
+            <td style="font-size:.72rem;white-space:nowrap">${c.fecha}</td>
+            <td>${statusBadge(c.estado)}</td>
+            <td style="font-size:.72rem">${c.fecha_contacto||'—'}</td>
+            <td style="font-size:.72rem">${c.fecha_seguimiento||'—'}</td>
+            <td><button class="btn-sm ghost" onclick="toggleFollowPanel(${c._row},${i})" style="font-size:.7rem">✏️ Gestionar</button></td>
+          </tr>
+          <tr id="follow-row-${c._row}" style="display:none">
+            <td colspan="9" style="padding:0">
+              <div class="contact-detail-panel open" style="margin:.3rem .5rem .7rem">
+                <p style="font-weight:800;font-size:.8rem;color:var(--navy);margin-bottom:.75rem">📋 Gestión de seguimiento — ${c.nombre}</p>
+                <div class="follow-form-grid">
+                  <div class="cf-group">
+                    <label>Estado *</label>
+                    <select id="fs-status-${c._row}" onchange="toggleFollowupDate(${c._row})">
+                      <option value="nuevo" ${c.estado==='nuevo'?'selected':''}>Nuevo</option>
+                      <option value="adquirio" ${c.estado==='adquirio'?'selected':''}>Adquirió producto</option>
+                      <option value="no-interesado" ${c.estado==='no-interesado'?'selected':''}>No está interesado</option>
+                      <option value="seguimiento" ${c.estado==='seguimiento'?'selected':''}>Contactar en otra fecha</option>
+                    </select>
+                  </div>
+                  <div class="cf-group">
+                    <label>Medio de contacto</label>
+                    <select id="fs-medio-${c._row}">
+                      <option value="" ${!c.medio?'selected':''}>— Seleccionar —</option>
+                      <option value="email" ${c.medio==='email'?'selected':''}>✉️ Email</option>
+                      <option value="celular" ${c.medio==='celular'?'selected':''}>📱 Celular</option>
+                      <option value="whatsapp" ${c.medio==='whatsapp'?'selected':''}>💬 WhatsApp</option>
+                      <option value="llamada" ${c.medio==='llamada'?'selected':''}>📞 Llamada</option>
+                    </select>
+                  </div>
+                  <div class="cf-group">
+                    <label>Fecha de contacto</label>
+                    <div class="follow-date-field">
+                      <input type="text" id="fs-fecha-${c._row}" value="${c.fecha_contacto||''}" placeholder="DD/MM/AAAA" oninput="syncDateInput(this,'fs-cal-${c._row}')"/>
+                      <input type="date" id="fs-cal-${c._row}" value="${toISODate(c.fecha_contacto)}" onchange="syncCalInput(this,'fs-fecha-${c._row}')"/>
+                      <span class="cal-icon">📅</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="followup-date-row ${c.estado==='seguimiento'?'show':''}" id="followup-row-${c._row}">
+                  <div class="cf-group" style="max-width:260px">
+                    <label>📅 Fecha para volver a contactar</label>
+                    <div class="follow-date-field">
+                      <input type="text" id="fs-fseg-${c._row}" value="${c.fecha_seguimiento||''}" placeholder="DD/MM/AAAA" oninput="syncDateInput(this,'fs-calseg-${c._row}')"/>
+                      <input type="date" id="fs-calseg-${c._row}" value="${toISODate(c.fecha_seguimiento)}" onchange="syncCalInput(this,'fs-fseg-${c._row}')"/>
+                      <span class="cal-icon">📅</span>
+                    </div>
+                  </div>
+                </div>
+                <div id="fs-err-${c._row}" style="display:none;color:#991b1b;font-size:.75rem;margin-top:.4rem"></div>
+                <div class="uform-actions" style="margin-top:.75rem">
+                  <button class="btn-sm orange" onclick="saveFollowup(${c._row})">💾 Guardar Seguimiento</button>
+                  <button class="btn-sm ghost" onclick="toggleFollowPanel(${c._row},${i})">Cancelar</button>
+                </div>
+              </div>
+            </td>
+          </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+function toggleFollowPanel(row, idx){
+  const el = document.getElementById('follow-row-'+row);
+  if(!el) return;
+  el.style.display = el.style.display==='none' ? 'table-row' : 'none';
+}
+
+function toggleFollowupDate(row){
+  const sel = document.getElementById('fs-status-'+row);
+  const row2 = document.getElementById('followup-row-'+row);
+  if(row2) row2.classList.toggle('show', sel?.value==='seguimiento');
+}
+
+// Date helpers
+function toISODate(d){
+  if(!d) return '';
+  // DD/MM/AAAA → AAAA-MM-DD
+  const m = d.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if(m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+  // Already ISO
+  if(/^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
+  return '';
+}
+function toDisplayDate(iso){
+  if(!iso) return '';
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : iso;
+}
+function syncDateInput(input, calId){
+  const cal = document.getElementById(calId);
+  if(cal) cal.value = toISODate(input.value);
+}
+function syncCalInput(cal, textId){
+  const txt = document.getElementById(textId);
+  if(txt) txt.value = toDisplayDate(cal.value);
+}
+
+async function saveFollowup(row){
+  const estado         = document.getElementById('fs-status-'+row)?.value    || '';
+  const medio          = document.getElementById('fs-medio-'+row)?.value     || '';
+  const fecha_contacto = document.getElementById('fs-fecha-'+row)?.value     || '';
+  const fecha_seguimiento = document.getElementById('fs-fseg-'+row)?.value   || '';
+  const errEl = document.getElementById('fs-err-'+row);
+  if(errEl) errEl.style.display='none';
+
+  if(estado==='seguimiento' && !fecha_seguimiento){
+    if(errEl){ errEl.textContent='Ingresa la fecha para volver a contactar.'; errEl.style.display='block'; }
+    return;
+  }
+
+  if(!SCRIPT_URL){ toast('Sin conexión al servidor.','err'); return; }
+
+  try{
+    const r = await callAppsScript({
+      action:'updateContact', row, estado, medio, fecha_contacto, fecha_seguimiento,
+      ultima_gestion: new Date().toLocaleString('es-US')
+    });
+    if(r && r.success){
+      toast('✅ Seguimiento guardado');
+      // Update local cache
+      const c = _allContacts.find(x=>x._row===row);
+      if(c){ c.estado=estado; c.medio=medio; c.fecha_contacto=fecha_contacto; c.fecha_seguimiento=fecha_seguimiento; }
+      loadContacts(); // refresh table
+    } else {
+      if(errEl){ errEl.textContent=(r?.error)||'Error al guardar.'; errEl.style.display='block'; }
+    }
+  } catch(e){
+    if(errEl){ errEl.textContent='Error: '+e.message; errEl.style.display='block'; }
+  }
 }
 
 // ── CONNECTION TEST ──
@@ -1914,17 +2216,48 @@ function selClass(id,courseName){
       lb.title='Usando link global de Zoom';
     }
   }
-  // Render Drive resources
-  const resEl=document.getElementById('pvid-resources');
-  const ress=(driveResources[id]||[]).concat(cls.resources||[]);
-  if(ress.length){
-    resEl.innerHTML='<p style="font-family:\'Nunito Sans\',sans-serif;font-weight:800;font-size:.72rem;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.5rem">📎 Material de Apoyo</p>'+
-      ress.map(r=>`<div class="res-item">
-        <div class="res-item-icon">${r.type==='pdf'?'<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="#0B2C4D" stroke-width="2" stroke-linejoin="round"/><path d="M14 2v6h6M9 13h6M9 17h6M9 9h1" stroke="#F7941D" stroke-width="2" stroke-linecap="round"/></svg>':r.type==='pptx'?'<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="#0B2C4D" stroke-width="2"/><path d="M8 12h8M8 8h8M8 16h5" stroke="#F7941D" stroke-width="2" stroke-linecap="round"/></svg>':'<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#0B2C4D" stroke-width="2"/><polygon points="10 8 16 12 10 16 10 8" fill="#F7941D"/></svg>'}</div>
-        <span>${r.name}</span>
-        <a href="#" class="rlk" onclick="openResource('${encodeURIComponent(r.url)}','${r.type}');return false">Ver →</a>
-      </div>`).join('');
-  }else{resEl.innerHTML=''}
+  // Render documents from Sheets for this class
+  const resEl = document.getElementById('pvid-resources');
+  resEl.innerHTML = '<p style="font-size:.72rem;color:var(--muted);font-style:italic">⏳ Cargando documentos...</p>';
+  const catKey2 = Object.keys(CATALOG).find(k=>CATALOG[k].sheetName===courseName||CATALOG[k].name.includes(courseName.split(' ')[0]));
+  const courseId2 = catKey2 || courseName.toLowerCase().replace(/[^a-z0-9]/g,'_');
+  if(SCRIPT_URL){
+    callAppsScript({action:'getDocuments', course_id:courseId2, class_id:id})
+      .then(d=>{
+        const docs = d?.docs||[];
+        if(!docs.length){ resEl.innerHTML=''; return; }
+        const icons={pdf:'📄',pptx:'📊',video:'🎬',link:'🔗'};
+        resEl.innerHTML='<p style="font-family:\'Nunito Sans\',sans-serif;font-weight:800;font-size:.72rem;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.5rem">📎 Material de Apoyo</p>'+
+          docs.map(doc=>`<div class="res-item">
+            <div class="res-item-icon">${icons[doc.type]||'📎'}</div>
+            <span>${doc.name}</span>
+            <a href="#" class="rlk" onclick="openProtectedDoc('${encodeURIComponent(doc.drive_url||doc.doc_id)}');return false">Ver →</a>
+          </div>`).join('');
+      }).catch(()=>{ resEl.innerHTML=''; });
+  } else { resEl.innerHTML=''; }
+}
+
+function openProtectedDoc(urlEnc){
+  try{
+    const url = decodeURIComponent(urlEnc);
+    // Build Drive preview URL (no download option)
+    let previewSrc = url;
+    const driveId = url.match(/\/d\/([a-zA-Z0-9_-]+)/)?.[1] || url.match(/id=([a-zA-Z0-9_-]+)/)?.[1];
+    if(driveId) previewSrc = `https://drive.google.com/file/d/${driveId}/preview`;
+    const w = window.open('',"_blank","width=1000,height=700,menubar=no,toolbar=no,location=no,status=no");
+    if(w){
+      w.document.write(`<!DOCTYPE html><html><head><title>Material del Curso — EPG</title>
+        <style>*{margin:0;padding:0;box-sizing:border-box}body{background:#0B2C4D;display:flex;flex-direction:column;height:100vh;font-family:sans-serif;user-select:none}
+        .bar{background:#001f3f;color:white;padding:10px 16px;display:flex;align-items:center;gap:10px;font-size:.8rem;font-weight:700;justify-content:space-between;flex-shrink:0}
+        .bar .logo{color:#F7941D}iframe{flex:1;border:none;width:100%;height:100%}</style>
+        <script>document.addEventListener("contextmenu",e=>e.preventDefault());document.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&["s","p","u","c"].includes(e.key.toLowerCase()))e.preventDefault();});<\/script>
+        </head><body oncontextmenu="return false">
+        <div class="bar"><span><span class="logo">Evolution Prime Group</span> — Material del Curso (Solo visualización)</span><span>🔒 Sin descarga</span></div>
+        <iframe src="${previewSrc}" sandbox="allow-scripts allow-same-origin allow-forms" allow="fullscreen"></iframe>
+        </body></html>`);
+      w.document.close();
+    }
+  }catch(e){ alert("No se pudo abrir el documento."); }
 }
 
 function openResource(urlEnc,type){
@@ -2478,10 +2811,8 @@ function renderCourseGroup(active){
         <!-- New class form -->
         <div class="cls-edit" id="newcls-${encodeURIComponent(key)}">
           <div style="font-family:'Nunito Sans',sans-serif;font-weight:800;font-size:.78rem;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.6rem">➕ Nueva Clase</div>
-          <div class="f2col">
-            <div class="cf-group"><label>Semana</label><input type="number" id="ncl-week-${encodeURIComponent(key)}" placeholder="1" min="1"/></div>
-            <div class="cf-group"><label>ID Video YouTube (opcional)</label><input id="ncl-vid-${encodeURIComponent(key)}" placeholder="ID del video (11 caracteres)"/></div>
-          </div>
+          <div class="cf-group" style="max-width:160px"><label>Semana</label><input type="number" id="ncl-week-${encodeURIComponent(key)}" placeholder="1" min="1"/></div>
+          <input type="hidden" id="ncl-vid-${encodeURIComponent(key)}" value=""/>
           <div class="cf-group"><label>Título de la clase *</label><input id="ncl-title-${encodeURIComponent(key)}" placeholder="Ej: Introducción al Negocio"/></div>
           <div class="cf-group"><label>Descripción</label><textarea id="ncl-desc-${encodeURIComponent(key)}" placeholder="Descripción del contenido..."></textarea></div>
           <div class="zoom-row">
@@ -2529,10 +2860,8 @@ function renderClassRows(courseKey){
     <!-- Edit class panel -->
     <div class="cls-edit" id="clsedit-${keyEnc}-${idx}">
       <div style="font-family:'Nunito Sans',sans-serif;font-weight:800;font-size:.78rem;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.6rem">✏️ Clase ${cls.id}: ${cls.title}</div>
-      <div class="f2col">
-        <div class="cf-group"><label>Semana</label><input type="number" id="ecl-week-${keyEnc}-${idx}" value="${cls.week}"/></div>
-        <div class="cf-group"><label>ID Video YouTube</label><input id="ecl-vid-${keyEnc}-${idx}" value="${cls.videoId||''}" placeholder="opcional"/></div>
-      </div>
+      <div class="cf-group" style="max-width:160px"><label>Semana</label><input type="number" id="ecl-week-${keyEnc}-${idx}" value="${cls.week}"/></div>
+      <input type="hidden" id="ecl-vid-${keyEnc}-${idx}" value="${cls.videoId||''}"/>
       <div class="cf-group"><label>Título *</label><input id="ecl-title-${keyEnc}-${idx}" value="${cls.title}"/></div>
       <div class="cf-group"><label>Descripción</label><textarea id="ecl-desc-${keyEnc}-${idx}">${cls.desc||''}</textarea></div>
       <div class="zoom-row">
