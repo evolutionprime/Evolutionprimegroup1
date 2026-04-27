@@ -44,11 +44,11 @@ h1,h2,h3,h4,h5{font-family:'Bebas Neue',sans-serif;letter-spacing:.5px}
   position:fixed;top:0;left:0;width:100%;z-index:9990;
   background:var(--navy);
   display:flex;align-items:center;justify-content:space-between;
-  padding:0 2rem;height:68px;
+  padding:0 2rem;height:110px;
   box-shadow:0 2px 24px rgba(0,0,0,.3);
 }
 .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
-.nav-logo img{height:48px;width:48px;object-fit:contain}
+.nav-logo img{height:96px;width:96px;object-fit:contain}
 .nav-logo-txt{font-family:'Bebas Neue',sans-serif;font-size:1.15rem;color:var(--white);line-height:1.1}
 .nav-logo-txt em{color:var(--orange);font-style:normal}
 .nav-links{display:flex;gap:1.8rem;align-items:center}
@@ -64,7 +64,7 @@ h1,h2,h3,h4,h5{font-family:'Bebas Neue',sans-serif;letter-spacing:.5px}
 
 /* ─────────────────── HERO ─────────────────── */
 #hero{
-  margin-top:68px;min-height:95vh;
+  margin-top:110px;min-height:95vh;
   background:var(--navy);
   position:relative;overflow:hidden;
   display:flex;align-items:center;
@@ -316,7 +316,7 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
 
 /* ─────────────────── PORTAL ─────────────────── */
 #portal{display:none;position:fixed;inset:0;z-index:99000;background:var(--off);overflow-y:auto}
-.portal-nav{background:var(--navy);padding:.85rem 1.8rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 16px rgba(0,0,0,.25)}
+.portal-nav{background:var(--navy);padding:.85rem 1.8rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 16px rgba(0,0,0,.25);min-height:60px}
 .pnav-logo{display:flex;align-items:center;gap:9px}
 .pnav-logo img{height:36px;width:36px;object-fit:contain}
 .pnav-logo span{font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--white);letter-spacing:.5px}
@@ -414,7 +414,7 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
     .pdf-progress{height:4px;background:var(--mid);border-radius:2px;margin-top:.6rem;overflow:hidden;display:none}
     .pdf-progress-bar{height:100%;background:var(--orange);border-radius:2px;transition:width .3s;width:0%}
     /* ── CONTACT MANAGEMENT ── */
-    .contact-table-wrap{overflow-x:auto;margin-top:.75rem}
+    .contact-table-wrap{overflow-x:auto;margin-top:.75rem;display:block}
     .contact-mgmt-table{width:100%;border-collapse:collapse;font-size:.78rem;min-width:900px}
     .contact-mgmt-table th{background:var(--navy);color:white;padding:9px 11px;text-align:left;font-family:"Nunito Sans",sans-serif;font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
     .contact-mgmt-table td{padding:8px 10px;border-bottom:1px solid var(--mid);vertical-align:middle}
@@ -1187,7 +1187,7 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
               <button class="btn-sm navy" onclick="loadContacts()">🔄 Cargar Contactos</button>
             </div>
           </div>
-          <div id="contacts-wrap"><p class="empty-adm">Haz clic en Cargar Contactos.</p></div>
+          <div id="contacts-wrap" style="min-height:200px"><p class="empty-adm">Cargando contactos... si no aparecen, haz clic en 🔄 Cargar Contactos.</p></div>
         </div>
 
         <!-- ══ ÓRDENES ════════════════════════════════════════════ -->
@@ -1684,6 +1684,7 @@ function filterContacts(){
 
 function renderContactsTable(contacts){
   const w = document.getElementById('contacts-wrap');
+  if(!w){ console.warn('contacts-wrap not found'); return; }
   if(!contacts.length){
     w.innerHTML='<p class="empty-adm">No hay contactos'+( document.getElementById('filter-status')?.value ? ' con ese estado' : '')+'. <a href="#" onclick="loadContacts();return false" style="color:var(--orange)">Recargar</a></p>';
     return;
@@ -1778,7 +1779,9 @@ function renderContactsTable(contacts){
 function toggleFollowPanel(row, idx){
   const el = document.getElementById('follow-row-'+row);
   if(!el) return;
-  el.style.display = el.style.display==='none' ? 'table-row' : 'none';
+  // Use table-row for TR elements
+  const isHidden = el.style.display==='none' || el.style.display==='';
+  el.style.display = isHidden ? 'table-row' : 'none';
 }
 
 function toggleFollowupDate(row){
@@ -2323,6 +2326,7 @@ function aTab(id,btn){
   if(id==='courses'){ renderAdminCourseList(); courseTab('active', document.getElementById('ctab-active')); }
   if(id==='pricelog') loadPriceLog();
   if(id==='orders')   loadOrders();
+  if(id==='contacts') loadContacts();
   if(id==='config'){
     const firstCfgTab = document.querySelector('#cfg-subtabs .atab');
     if(firstCfgTab && !document.querySelector('#cfg-subtabs .atab.on'))
@@ -2851,10 +2855,10 @@ function renderClassRows(courseKey){
         </div>
       </div>
       <span class="cls-week">Sem ${cls.week}</span>
-      <div style="display:flex;gap:.3rem">
-        <button class="btn-icon" onclick="openEditClass('${keyEnc}',${idx})" title="Editar">✏️</button>
-        <button class="btn-icon" onclick="toggleDocPanel('${keyEnc}',${idx})" title="Documentos">📎</button>
-        <button class="btn-icon danger" onclick="deleteClass('${keyEnc}',${idx})" title="Eliminar">🗑️</button>
+      <div style="display:flex;gap:.3rem;flex-wrap:wrap">
+        <button class="btn-icon" onclick="openEditClass('${keyEnc}',${idx})" title="Editar clase">✏️</button>
+        <button class="btn-icon" onclick="toggleDocPanel('${keyEnc}',${idx})" title="Subir/ver documentos" style="background:var(--off);border-color:var(--orange);color:var(--orange)">📄 Doc</button>
+        <button class="btn-icon danger" onclick="deleteClass('${keyEnc}',${idx})" title="Eliminar clase">🗑️</button>
       </div>
     </div>
     <!-- Edit class panel -->
