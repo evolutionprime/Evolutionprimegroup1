@@ -1685,56 +1685,48 @@ async function uploadPdfToSheet(file, keyEnc, idx){
 
     setUI(40, '⏳ Subiendo a Google Drive...');
 
-    // ── Use fetch POST (not JSONP) — base64 is too large for GET URLs ──
-    // Apps Script supports POST with CORS for "Anyone" access level
-    const formData = new FormData();
-    formData.append('action',      'uploadFileToDrive');
-    formData.append('token',       sessionToken || '');
-    formData.append('file_b64',    b64);
-    formData.append('file_name',   fileName);
-    formData.append('mime_type',   file.type || 'application/pdf');
-    formData.append('folder_id',   DRIVE_FOLDER_ID);
-    formData.append('course_id',   courseId);
-    formData.append('class_id',    String(cls.id));
-    formData.append('week',        String(cls.week));
-    formData.append('doc_name',    fileName);
-    formData.append('doc_type',    ext);
+    // ── Use fetch POST with URL-encoded body ──
+    // Apps Script reads URL-encoded POST via e.postData.contents
+    // This works reliably and supports large payloads (base64 files)
+    const params = new URLSearchParams();
+    params.append('action',     'uploadFileToDrive');
+    params.append('token',      sessionToken || '');
+    params.append('file_b64',   b64);
+    params.append('file_name',  fileName);
+    params.append('mime_type',  file.type || 'application/pdf');
+    params.append('folder_id',  DRIVE_FOLDER_ID);
+    params.append('course_id',  courseId);
+    params.append('class_id',   String(cls.id));
+    params.append('week',       String(cls.week));
+    params.append('doc_name',   fileName);
+    params.append('doc_type',   ext);
 
-    setUI(60, '⏳ Procesando en el servidor...');
+    setUI(60, '⏳ Subiendo a Google Drive...');
 
-    // POST with no-cors — response will be opaque but upload succeeds
-    // Then confirm via JSONP
     let result = null;
-
     try{
       const resp = await fetch(SCRIPT_URL, {
-        method: 'POST',
-        body:   formData,
-        // No Content-Type header — browser sets multipart/form-data automatically
+        method:  'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body:    params.toString()
       });
-      // If CORS allows reading the response
-      if(resp.ok){
-        const txt = await resp.text();
-        try{ result = JSON.parse(txt); }catch(e){ result = {success: txt.includes('success')}; }
+      const txt = await resp.text();
+      try{ result = JSON.parse(txt); }
+      catch(pe){
+        // Apps Script sometimes wraps in JSONP even for POST
+        const match = txt.match(/\{.*\}/s);
+        if(match) try{ result = JSON.parse(match[0]); }catch(e2){}
       }
-    } catch(corsErr){
-      // CORS blocked reading — but POST may have succeeded
-      // Fall through to JSONP confirmation
-      console.warn('POST response unreadable (CORS), checking via JSONP...');
+    } catch(fetchErr){
+      console.warn('Fetch POST error:', fetchErr.message);
     }
 
     setUI(85, '⏳ Verificando...');
 
-    // Confirm via JSONP if result not available
     if(!result){
       try{
-        result = await callAppsScript({
-          action:'checkLastUpload', course_id:courseId, class_id:cls.id
-        });
-      }catch(e){
-        // Assume success if no error
-        result = {success: true, assumed: true};
-      }
+        result = await callAppsScript({action:'checkLastUpload', course_id:courseId, class_id:cls.id});
+      }catch(e){ result = {success: false, error: e.message}; }
     }
 
     if(result && result.success){
