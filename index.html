@@ -3004,16 +3004,29 @@ function renderClassRows(courseKey){
         <button class="btn-sm ghost" onclick="document.getElementById('clsedit-${keyEnc}-${idx}').classList.remove('open')">Cancelar</button>
       </div>
     </div>
-    <!-- Documents panel -->
+    <!-- Documents panel — PDF upload to Google Drive -->
     <div class="doc-panel" id="docpanel-${keyEnc}-${idx}" style="display:none">
-      <div class="doc-panel-title">📎 Documentos de la Clase ${cls.id}</div>
-      <div class="doc-upload-row">
-        <div class="cf-group"><label>Tipo</label><select id="dt-type-${keyEnc}-${idx}" class="pinput" style="width:100%"><option value="pdf">PDF</option><option value="pptx">PPTX</option><option value="video">Video</option><option value="link">Link</option></select></div>
-        <div class="cf-group" style="grid-column:span 2"><label>Nombre del documento</label><input id="dt-name-${keyEnc}-${idx}" placeholder="Presentación Semana..." class="pinput" style="width:100%"/></div>
-        <div class="cf-group" style="grid-column:span 2"><label>URL de Google Drive</label><input id="dt-url-${keyEnc}-${idx}" placeholder="https://drive.google.com/file/d/..." class="pinput" style="width:100%"/></div>
+      <div class="doc-panel-title">📎 Documentos de la Clase ${cls.id} — ${cls.title}</div>
+      <!-- Drag & drop / click upload area -->
+      <div class="pdf-upload-area" id="pdfarea-${keyEnc}-${idx}"
+           ondragover="event.preventDefault();this.classList.add('drag')"
+           ondragleave="this.classList.remove('drag')"
+           ondrop="handlePdfDrop(event,'${keyEnc}',${idx})">
+        <input type="file" accept=".pdf,.pptx,.ppt,.doc,.docx"
+               onchange="handlePdfSelect(event,'${keyEnc}',${idx})"/>
+        <div class="pdf-upload-icon">📄</div>
+        <div class="pdf-upload-text">
+          <strong>Arrastra un PDF, PPTX o DOC</strong><br/>
+          o haz clic para seleccionar desde tu computadora<br/>
+          <span style="font-size:.7rem;color:var(--muted)">Máx. 10MB · Se sube a Google Drive automáticamente</span>
+        </div>
+        <div class="pdf-progress" id="pdfprog-${keyEnc}-${idx}">
+          <div class="pdf-progress-bar" id="pdfbar-${keyEnc}-${idx}"></div>
+        </div>
+        <div id="pdfstatus-${keyEnc}-${idx}" style="font-size:.75rem;margin-top:.5rem;min-height:18px"></div>
       </div>
-      <button class="btn-sm navy" onclick="saveDocument('${keyEnc}',${idx})">+ Agregar Documento</button>
-      <div id="doclist-${keyEnc}-${idx}" style="margin-top:.6rem"></div>
+      <!-- Document list for this class -->
+      <div id="doclist-${keyEnc}-${idx}" style="margin-top:.75rem"></div>
     </div>
     `;
   }).join('');
