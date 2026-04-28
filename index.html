@@ -1277,7 +1277,7 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
               <button class="btn-sm navy" onclick="loadContacts()">🔄 Cargar Contactos</button>
             </div>
           </div>
-          <div id="contacts-wrap" style="min-height:200px;max-height:calc(100vh - 260px);overflow-y:auto;overflow-x:hidden;padding-right:.25rem"><p class="empty-adm">Cargando contactos... si no aparecen, haz clic en 🔄 Cargar Contactos.</p></div>
+          <div id="contacts-wrap" style="min-height:200px"><p class="empty-adm">Cargando contactos... si no aparecen, haz clic en 🔄 Cargar Contactos.</p></div>
         </div>
 
         <!-- ══ ÓRDENES ════════════════════════════════════════════ -->
@@ -1818,130 +1818,94 @@ function renderContactsTable(contacts){
   const w = document.getElementById('contacts-wrap');
   if(!w){ console.warn('contacts-wrap not found'); return; }
   if(!contacts.length){
-    w.innerHTML='<p class="empty-adm">No hay contactos'
-      +(document.getElementById('filter-status')?.value?' con ese estado':'')
-      +'. <a href="#" onclick="loadContacts(true);return false" style="color:var(--orange)">Recargar</a></p>';
+    w.innerHTML='<p class="empty-adm">No hay contactos'+( document.getElementById('filter-status')?.value ? ' con ese estado' : '')+'. <a href="#" onclick="loadContacts();return false" style="color:var(--orange)">Recargar</a></p>';
     return;
-  }
-
-  // Sort oldest first (by fecha column, ascending)
-  const sorted = [...contacts].sort((a,b)=>{
-    const da = new Date(a.fecha||0), db = new Date(b.fecha||0);
-    return da - db;
-  });
-
-  // Helper: days since a date string
-  function daysSince(dateStr){
-    if(!dateStr) return 999;
-    const d = new Date(dateStr);
-    if(isNaN(d)) return 999;
-    return Math.floor((Date.now() - d.getTime()) / 86400000);
-  }
-
-  // Color line by days
-  function lineColor(dateStr){
-    const d = daysSince(dateStr);
-    if(d <= 1) return '#16a34a';   // green  — 0-1 days
-    if(d <= 2) return '#f59e0b';   // yellow — 2 days
-    return '#dc2626';              // red    — 3+ days
-  }
-
-  function lineLabel(dateStr){
-    const d = daysSince(dateStr);
-    if(d === 0) return 'Hoy';
-    if(d === 1) return 'Ayer';
-    return d + ' días';
   }
 
   const statusBadge = s => {
     const map = {
-      'nuevo':         ['#eff6ff','#1e40af','Nuevo'],
-      'adquirio':      ['#dcfce7','#166534','Adquirió'],
-      'no-interesado': ['#fef2f2','#991b1b','No interesado'],
-      'seguimiento':   ['#fff7ed','#c2410c','Seguimiento']
+      'nuevo':          ['status-new',            'Nuevo'],
+      'adquirio':       ['status-acquired',        'Adquirió producto'],
+      'no-interesado':  ['status-not-interested',  'No interesado'],
+      'seguimiento':    ['status-follow-up',       'Seguimiento']
     };
-    const [bg,col,lbl] = map[s]||['#f3f4f6','#374151',s||'Nuevo'];
-    return '<span style="background:'+bg+';color:'+col+';font-size:.65rem;font-weight:800;padding:3px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap">'+lbl+'</span>';
+    const [cls,lbl]=map[s]||['status-new','Nuevo'];
+    return `<span class="status-badge ${cls}">${lbl}</span>`;
   };
 
-  const cards = sorted.map((c,i) => {
-    const color  = lineColor(c.fecha);
-    const label  = lineLabel(c.fecha);
-    const rowN   = c._row;
-    return '<div class="contact-card" id="ccard-'+rowN+'" style="background:var(--white);border-radius:10px;border:1px solid var(--mid);box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:.6rem;overflow:hidden">'
-      // Color indicator bar
-      + '<div style="height:4px;background:'+color+'"></div>'
-      + '<div style="padding:.85rem 1rem">'
-      // Row 1: name + status + days badge
-      + '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.4rem;margin-bottom:.5rem">'
-      +   '<div style="display:flex;align-items:center;gap:.5rem">'
-      +     '<span style="font-weight:800;font-size:.9rem;color:var(--navy)">'+c.nombre+'</span>'
-      +     statusBadge(c.estado)
-      +   '</div>'
-      +   '<div style="display:flex;align-items:center;gap:.5rem">'
-      +     '<span style="font-size:.65rem;font-weight:700;padding:2px 8px;border-radius:20px;background:'+color+'22;color:'+color+'">⏱ '+label+'</span>'
-      +     '<button class="btn-sm ghost" style="font-size:.7rem;padding:4px 10px" onclick="toggleFollowPanel('+rowN+','+i+')">✏️ Gestionar</button>'
-      +   '</div>'
-      + '</div>'
-      // Row 2: contact info
-      + '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.3rem .8rem;font-size:.75rem;color:var(--text)">'
-      +   '<div><span style="color:var(--muted);font-size:.67rem;text-transform:uppercase;letter-spacing:.4px">Correo</span><br/><span>'+c.email+'</span></div>'
-      +   '<div><span style="color:var(--muted);font-size:.67rem;text-transform:uppercase;letter-spacing:.4px">Teléfono</span><br/><span>'+c.telefono+'</span></div>'
-      +   '<div><span style="color:var(--muted);font-size:.67rem;text-transform:uppercase;letter-spacing:.4px">Curso</span><br/><span title="'+c.curso+'">'+c.curso+'</span></div>'
-      +   '<div><span style="color:var(--muted);font-size:.67rem;text-transform:uppercase;letter-spacing:.4px">Fecha</span><br/><span>'+c.fecha+'</span></div>'
-      +   (c.fecha_contacto?'<div><span style="color:var(--muted);font-size:.67rem;text-transform:uppercase;letter-spacing:.4px">Último contacto</span><br/><span>'+c.fecha_contacto+'</span></div>':'')
-      +   (c.fecha_seguimiento?'<div><span style="color:var(--muted);font-size:.67rem;text-transform:uppercase;letter-spacing:.4px">Seguimiento</span><br/><span>'+c.fecha_seguimiento+'</span></div>':'')
-      +   (c.mensaje?'<div style="grid-column:1/-1"><span style="color:var(--muted);font-size:.67rem;text-transform:uppercase;letter-spacing:.4px">Mensaje</span><br/><span>'+c.mensaje+'</span></div>':'')
-      + '</div>'
-      + '</div>'
-      // Follow-up panel (hidden by default)
-      + '<div id="follow-row-'+rowN+'" style="display:none;border-top:1px solid var(--mid);padding:1rem;background:#fafbff">'
-      +   '<p style="font-weight:800;font-size:.8rem;color:var(--navy);margin-bottom:.75rem">📋 Gestión de seguimiento — '+c.nombre+'</p>'
-      +   '<div class="follow-form-grid">'
-      +     '<div class="cf-group"><label>Estado *</label>'
-      +       '<select id="fs-status-'+rowN+'" onchange="toggleFollowupDate('+rowN+')">'
-      +         '<option value="nuevo"'+(c.estado==='nuevo'?' selected':'')+'>Nuevo</option>'
-      +         '<option value="adquirio"'+(c.estado==='adquirio'?' selected':'')+'>Adquirió producto</option>'
-      +         '<option value="no-interesado"'+(c.estado==='no-interesado'?' selected':'')+'>No está interesado</option>'
-      +         '<option value="seguimiento"'+(c.estado==='seguimiento'?' selected':'')+'>Contactar en otra fecha</option>'
-      +       '</select>'
-      +     '</div>'
-      +     '<div class="cf-group"><label>Medio de contacto</label>'
-      +       '<select id="fs-medio-'+rowN+'">'
-      +         '<option value=""'+((!c.medio)?' selected':'')+'>— Seleccionar —</option>'
-      +         '<option value="email"'+(c.medio==='email'?' selected':'')+'>✉️ Email</option>'
-      +         '<option value="celular"'+(c.medio==='celular'?' selected':'')+'>📱 Celular</option>'
-      +         '<option value="whatsapp"'+(c.medio==='whatsapp'?' selected':'')+'>💬 WhatsApp</option>'
-      +         '<option value="llamada"'+(c.medio==='llamada'?' selected':'')+'>📞 Llamada</option>'
-      +       '</select>'
-      +     '</div>'
-      +     '<div class="cf-group"><label>Fecha de contacto</label>'
-      +       '<div class="follow-date-field">'
-      +         '<input type="text" id="fs-fecha-'+rowN+'" value="'+(c.fecha_contacto||'')+'" placeholder="DD/MM/AAAA" oninput="syncDateInput(this,\'fs-cal-'+rowN+'\')"/>'
-      +         '<input type="date" id="fs-cal-'+rowN+'" value="'+toISODate(c.fecha_contacto)+'" onchange="syncCalInput(this,\'fs-fecha-'+rowN+'\')"/>'
-      +         '<span class="cal-icon">📅</span>'
-      +       '</div>'
-      +     '</div>'
-      +   '</div>'
-      +   '<div class="followup-date-row '+(c.estado==='seguimiento'?'show':'')+'" id="followup-row-'+rowN+'">'
-      +     '<div class="cf-group" style="max-width:260px"><label>📅 Fecha para volver a contactar</label>'
-      +       '<div class="follow-date-field">'
-      +         '<input type="text" id="fs-fseg-'+rowN+'" value="'+(c.fecha_seguimiento||'')+'" placeholder="DD/MM/AAAA" oninput="syncDateInput(this,\'fs-calseg-'+rowN+'\')"/>'
-      +         '<input type="date" id="fs-calseg-'+rowN+'" value="'+toISODate(c.fecha_seguimiento)+'" onchange="syncCalInput(this,\'fs-fseg-'+rowN+'\')"/>'
-      +         '<span class="cal-icon">📅</span>'
-      +       '</div>'
-      +     '</div>'
-      +   '</div>'
-      +   '<div id="fs-err-'+rowN+'" style="display:none;color:#991b1b;font-size:.75rem;margin-top:.4rem"></div>'
-      +   '<div class="uform-actions" style="margin-top:.75rem">'
-      +     '<button class="btn-sm orange" onclick="saveFollowup('+rowN+')">💾 Guardar Seguimiento</button>'
-      +     '<button class="btn-sm ghost" onclick="toggleFollowPanel('+rowN+','+i+')">Cancelar</button>'
-      +   '</div>'
-      + '</div>'
-      + '</div>';
-  });
-
-  w.innerHTML = '<div style="padding-bottom:.5rem">' + cards.join('') + '</div>';
+  w.innerHTML=`<div class="contact-table-wrap">
+    <table class="contact-mgmt-table">
+      <thead><tr>
+        <th>Nombre</th><th>Correo</th><th>Teléfono</th><th>Curso</th>
+        <th>Fecha</th><th>Estado</th><th>Último contacto</th><th>Seguimiento</th><th>Gestionar</th>
+      </tr></thead>
+      <tbody>
+        ${contacts.map((c,i)=>`
+          <tr>
+            <td style="font-weight:700">${c.nombre}</td>
+            <td style="font-size:.72rem">${c.email}</td>
+            <td style="font-size:.72rem">${c.telefono}</td>
+            <td style="font-size:.72rem;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${c.curso}">${c.curso}</td>
+            <td style="font-size:.72rem;white-space:nowrap">${c.fecha}</td>
+            <td>${statusBadge(c.estado)}</td>
+            <td style="font-size:.72rem">${c.fecha_contacto||'—'}</td>
+            <td style="font-size:.72rem">${c.fecha_seguimiento||'—'}</td>
+            <td><button class="btn-sm ghost" onclick="toggleFollowPanel(${c._row},${i})" style="font-size:.7rem">✏️ Gestionar</button></td>
+          </tr>
+          <tr id="follow-row-${c._row}" style="display:none">
+            <td colspan="9" style="padding:0">
+              <div class="contact-detail-panel open" style="margin:.3rem .5rem .7rem">
+                <p style="font-weight:800;font-size:.8rem;color:var(--navy);margin-bottom:.75rem">📋 Gestión de seguimiento — ${c.nombre}</p>
+                <div class="follow-form-grid">
+                  <div class="cf-group">
+                    <label>Estado *</label>
+                    <select id="fs-status-${c._row}" onchange="toggleFollowupDate(${c._row})">
+                      <option value="nuevo" ${c.estado==='nuevo'?'selected':''}>Nuevo</option>
+                      <option value="adquirio" ${c.estado==='adquirio'?'selected':''}>Adquirió producto</option>
+                      <option value="no-interesado" ${c.estado==='no-interesado'?'selected':''}>No está interesado</option>
+                      <option value="seguimiento" ${c.estado==='seguimiento'?'selected':''}>Contactar en otra fecha</option>
+                    </select>
+                  </div>
+                  <div class="cf-group">
+                    <label>Medio de contacto</label>
+                    <select id="fs-medio-${c._row}">
+                      <option value="" ${!c.medio?'selected':''}>— Seleccionar —</option>
+                      <option value="email" ${c.medio==='email'?'selected':''}>✉️ Email</option>
+                      <option value="celular" ${c.medio==='celular'?'selected':''}>📱 Celular</option>
+                      <option value="whatsapp" ${c.medio==='whatsapp'?'selected':''}>💬 WhatsApp</option>
+                      <option value="llamada" ${c.medio==='llamada'?'selected':''}>📞 Llamada</option>
+                    </select>
+                  </div>
+                  <div class="cf-group">
+                    <label>Fecha de contacto</label>
+                    <div class="follow-date-field">
+                      <input type="text" id="fs-fecha-${c._row}" value="${c.fecha_contacto||''}" placeholder="DD/MM/AAAA" oninput="syncDateInput(this,'fs-cal-${c._row}')"/>
+                      <input type="date" id="fs-cal-${c._row}" value="${toISODate(c.fecha_contacto)}" onchange="syncCalInput(this,'fs-fecha-${c._row}')"/>
+                      <span class="cal-icon">📅</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="followup-date-row ${c.estado==='seguimiento'?'show':''}" id="followup-row-${c._row}">
+                  <div class="cf-group" style="max-width:260px">
+                    <label>📅 Fecha para volver a contactar</label>
+                    <div class="follow-date-field">
+                      <input type="text" id="fs-fseg-${c._row}" value="${c.fecha_seguimiento||''}" placeholder="DD/MM/AAAA" oninput="syncDateInput(this,'fs-calseg-${c._row}')"/>
+                      <input type="date" id="fs-calseg-${c._row}" value="${toISODate(c.fecha_seguimiento)}" onchange="syncCalInput(this,'fs-fseg-${c._row}')"/>
+                      <span class="cal-icon">📅</span>
+                    </div>
+                  </div>
+                </div>
+                <div id="fs-err-${c._row}" style="display:none;color:#991b1b;font-size:.75rem;margin-top:.4rem"></div>
+                <div class="uform-actions" style="margin-top:.75rem">
+                  <button class="btn-sm orange" onclick="saveFollowup(${c._row})">💾 Guardar Seguimiento</button>
+                  <button class="btn-sm ghost" onclick="toggleFollowPanel(${c._row},${i})">Cancelar</button>
+                </div>
+              </div>
+            </td>
+          </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
 }
 
 function toggleFollowPanel(row, idx){
@@ -3193,12 +3157,6 @@ async function processPayment(){
     if(stripeCard){ try{ stripeCard.destroy(); }catch(_){} stripeCard=null; }
     // Keep stripeInst alive — no need to recreate Stripe() on next purchase
     cart=[]; updateCartUI();
-    // Invalidate cache so main page reloads fresh courses on next view
-    try{ localStorage.removeItem('epg_courses_v2'); }catch(e){}
-    // Reload public courses grid in background (shows new enrollment counts etc.)
-    setTimeout(function(){
-      if(typeof loadCoursesFromSheet === 'function') loadCoursesFromSheet();
-    }, 1500);
 
   }catch(ex){
     er.textContent='Error al procesar: '+ex.message+'. Intenta de nuevo.';
