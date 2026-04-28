@@ -247,7 +247,7 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
 .ft-bot .or{color:var(--orange);font-weight:700}
 
 /* ─────────────────── MODALS / OVERLAYS ─────────────────── */
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:99990;display:none;align-items:center;justify-content:center;backdrop-filter:blur(5px);padding:1rem}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:99990;display:none;align-items:center;justify-content:center;padding:1rem}
 .modal-bg.on{display:flex}
 .modal{background:var(--white);border-radius:20px;width:100%;max-width:420px;box-shadow:0 24px 70px rgba(0,0,0,.45);position:relative;animation:mIn .25s ease;overflow:hidden}
 .modal-head{background:var(--navy);color:var(--white);padding:1.3rem 1.6rem;display:flex;align-items:center;gap:12px}
@@ -289,7 +289,7 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
 .sec-row span{display:flex;align-items:center;gap:4px}
 
 /* ─────────────────── CHECKOUT ─────────────────── */
-.co-modal{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:99995;display:none;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(4px)}
+.co-modal{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:99995;display:none;align-items:center;justify-content:center;padding:1rem}
 .co-modal.on{display:flex}
 .co-box{background:var(--white);border-radius:20px;width:100%;max-width:520px;max-height:92vh;overflow-y:auto;box-shadow:0 24px 70px rgba(0,0,0,.45);animation:mIn .25s ease}
 .co-head{background:var(--navy);color:var(--white);padding:1.1rem 1.5rem;border-radius:20px 20px 0 0;display:flex;align-items:center;justify-content:space-between}
@@ -302,8 +302,8 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
 .co-total{display:flex;justify-content:space-between;font-family:'Bebas Neue',sans-serif}
 .co-total .tl{color:var(--navy);font-size:1rem;letter-spacing:.3px}
 .co-total .ta{color:var(--orange);font-size:1.4rem}
-#stripe-el{border:2px solid var(--mid);border-radius:8px;padding:12px 14px;margin-top:.5rem;transition:border-color .2s}
-#stripe-el.StripeElement--focus{border-color:var(--orange)}
+#stripe-el-wrap{border:2px solid var(--mid);border-radius:8px;padding:12px 14px;margin-top:.5rem;transition:border-color .2s;background:var(--white)}
+#stripe-el-wrap:focus-within{border-color:var(--orange)}
 #stripe-err{color:#c53030;font-size:.78rem;margin-top:5px;min-height:16px}
 .stripe-note{background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:9px 12px;font-size:.75rem;color:#166534;margin:.9rem 0;display:flex;align-items:center;gap:6px}
 .btn-pay{width:100%;padding:14px;background:var(--navy);color:var(--white);border:none;border-radius:9px;font-family:'Nunito Sans',sans-serif;font-weight:900;font-size:.88rem;cursor:pointer;text-transform:uppercase;letter-spacing:.8px;margin-top:1rem;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .2s}
@@ -1155,7 +1155,7 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
         </div>
         <p style="font-family:'Nunito Sans',sans-serif;font-weight:800;font-size:.72rem;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.5rem">Información de pago</p>
         <div class="stripe-note">🔒 Cifrado SSL 256-bit. Procesado por Stripe — nunca almacenamos datos de tarjeta.</div>
-        <div id="stripe-el" style="min-height:44px;padding:2px 0"></div>
+        <div id="stripe-el-wrap"><div id="stripe-el" style="min-height:44px"></div></div>
         <div id="stripe-err" style="color:#c53030;font-size:.78rem;margin-top:4px;min-height:16px"></div>
         <button id="btn-stripe-retry" style="display:none;margin-top:6px;font-size:.72rem;color:var(--orange);border:none;background:none;cursor:pointer;text-decoration:underline" onclick="initStripe()">🔄 Reintentar carga del formulario de pago</button>
         <div id="pay-err" style="display:none;background:#fef2f2;border:1px solid #fca5a5;color:#991b1b;border-radius:8px;padding:9px 12px;font-size:.78rem;margin-top:.6rem"></div>
