@@ -404,6 +404,7 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
   .courses-grid,.adv-grid,.res-grid,.vals,.hero-stats,.temario-grid,.price-grid,.frow{grid-template-columns:1fr}
 }
 .nosel{user-select:none;-webkit-user-select:none}
+    .cat-tag{display:inline-flex;align-items:center;gap:4px;background:var(--navy);color:white;font-size:.75rem;font-weight:700;padding:5px 10px;border-radius:20px}
     /* ── CHANGE PASSWORD MODAL ── */
     .pw-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99990;display:none;align-items:center;justify-content:center}
     .pw-modal-overlay.on{display:flex}
@@ -1300,6 +1301,7 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
           <div style="display:flex;gap:.5rem;margin-bottom:1.2rem;flex-wrap:wrap" id="cfg-subtabs">
             <button class="atab on" onclick="cfgTab('users',this)">👤 Usuarios</button>
             <button class="atab"    onclick="cfgTab('stripe',this)">💳 Stripe</button>
+            <button class="atab"    onclick="cfgTab('categories',this)">🗂️ Categorías</button>
             <button class="atab"    onclick="cfgTab('emailcfg',this)">📧 Correo Bienvenida</button>
             <button class="atab"    onclick="cfgTab('contactform',this)">📝 Formulario</button>
           </div>
@@ -1336,6 +1338,23 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
             </div>
             <button class="btn-sm navy" onclick="loadUsers()" style="margin-bottom:.75rem">🔄 Cargar Usuarios</button>
             <div id="users-wrap"><p class="empty-adm">Haz clic en Cargar Usuarios.</p></div>
+          </div>
+
+          <!-- CATEGORIES -->
+          <div id="cfg-categories" class="cfg-sec" style="display:none">
+            <p style="color:var(--muted);font-size:.83rem;margin-bottom:1rem">Gestiona las categorías disponibles para los cursos. Se almacenan en Google Sheets.</p>
+            <div style="display:flex;gap:.5rem;margin-bottom:.75rem">
+              <input id="new-cat-input" placeholder="Nueva categoría..." class="pinput" style="flex:1"/>
+              <button class="btn-sm orange" onclick="addCategory()">+ Agregar</button>
+            </div>
+            <div id="categories-list" style="display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1rem">
+              <span class="cat-tag" data-cat="limpieza">🧹 Limpieza <button onclick="removeCategory('limpieza',this.parentElement)" style="border:none;background:none;cursor:pointer;color:#ef4444;font-size:.8rem;margin-left:3px">✕</button></span>
+              <span class="cat-tag" data-cat="pintura">🖌️ Pintura <button onclick="removeCategory('pintura',this.parentElement)" style="border:none;background:none;cursor:pointer;color:#ef4444;font-size:.8rem;margin-left:3px">✕</button></span>
+              <span class="cat-tag" data-cat="jardineria">🌱 Jardinería <button onclick="removeCategory('jardineria',this.parentElement)" style="border:none;background:none;cursor:pointer;color:#ef4444;font-size:.8rem;margin-left:3px">✕</button></span>
+              <span class="cat-tag" data-cat="creacion_empresas">🏢 Creación de Empresas <button onclick="removeCategory('creacion_empresas',this.parentElement)" style="border:none;background:none;cursor:pointer;color:#ef4444;font-size:.8rem;margin-left:3px">✕</button></span>
+            </div>
+            <button class="btn-sm navy" onclick="saveCategories()">💾 Guardar Categorías</button>
+            <div id="cat-status" style="display:none;margin-top:.5rem;font-size:.78rem;padding:8px 12px;border-radius:7px"></div>
           </div>
 
           <!-- STRIPE -->
@@ -2151,6 +2170,109 @@ async function checkEmailOnBlur(input){
   }catch(e){ /* ignore check errors */ }
 }
 
+
+// ================================================================
+// CATEGORIES MANAGEMENT
+// ================================================================
+var _categories = [
+  {id:'limpieza',           label:'🧹 Limpieza'},
+  {id:'pintura',            label:'🖌️ Pintura'},
+  {id:'jardineria',         label:'🌱 Jardinería'},
+  {id:'creacion_empresas',  label:'🏢 Creación de Empresas'}
+];
+
+function addCategory(){
+  const inp  = document.getElementById('new-cat-input');
+  const list = document.getElementById('categories-list');
+  if(!inp || !inp.value.trim() || !list) return;
+  const label = inp.value.trim();
+  const id    = label.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+  // Build tag with DOM (avoids quote escaping)
+  const sp = document.createElement('span');
+  sp.className = 'cat-tag'; sp.dataset.cat = id;
+  const rb = document.createElement('button');
+  rb.type = 'button';
+  rb.style.cssText = 'border:none;background:none;cursor:pointer;color:#fca5a5;font-size:.8rem;margin-left:3px';
+  rb.textContent = '✕';
+  rb.onclick = (function(catId, catSpan){ return function(){ removeCategory(catId, catSpan); }; })(id, sp);
+  sp.appendChild(document.createTextNode(label + ' '));
+  sp.appendChild(rb);
+  list.appendChild(sp);
+  _categories.push({id:id, label:label});
+  // Add to nc-category dropdown
+  const sel = document.getElementById('nc-category');
+  if(sel){
+    const opt = document.createElement('option');
+    opt.value = id; opt.textContent = label;
+    sel.appendChild(opt);
+  }
+  inp.value = '';
+}
+
+function removeCategory(id, el){
+  if(el) el.remove();
+  _categories = _categories.filter(c=>c.id!==id);
+  // Remove from nc-category dropdown
+  const sel = document.getElementById('nc-category');
+  if(sel){
+    const opt = sel.querySelector('option[value="'+id+'"]');
+    if(opt) opt.remove();
+  }
+}
+
+async function saveCategories(){
+  const st  = document.getElementById('cat-status');
+  const tags = document.querySelectorAll('#categories-list .cat-tag');
+  const cats = [];
+  tags.forEach(t=>{ const id=t.dataset.cat; const label=t.textContent.replace('✕','').trim(); if(id) cats.push({id,label}); });
+  if(st){ st.textContent='⏳ Guardando...'; st.style.display='block'; st.style.background='var(--off)'; st.style.color='var(--muted)'; }
+  if(!SCRIPT_URL){ if(st){st.textContent='❌ Sin conexión.';} return; }
+  try{
+    const r = await callAppsScript({action:'saveCategories', categories:JSON.stringify(cats)});
+    if(r&&r.success){
+      if(st){ st.textContent='✅ Categorías guardadas en Google Sheets.'; st.style.background='#dcfce7'; st.style.color='#166534'; }
+      toast('✅ Categorías guardadas');
+    } else {
+      if(st){ st.textContent='❌ '+(r?.error||'Error'); st.style.background='#fef2f2'; st.style.color='#991b1b'; }
+    }
+  }catch(e){
+    if(st){ st.textContent='❌ '+e.message; st.style.background='#fef2f2'; st.style.color='#991b1b'; }
+  }
+}
+
+async function loadCategories(){
+  if(!SCRIPT_URL) return;
+  try{
+    const r = await callAppsScript({action:'getCategories'});
+    if(r&&r.categories&&r.categories.length){
+      _categories = r.categories;
+      // Update nc-category dropdown
+      const sel = document.getElementById('nc-category');
+      if(sel){
+        sel.innerHTML = '<option value="">— Seleccionar —</option>';
+        _categories.forEach(c=>{
+          sel.innerHTML += '<option value="'+c.id+'">'+c.label+'</option>';
+        });
+      }
+      // Update categories-list display
+      const list = document.getElementById('categories-list');
+      if(list){
+        list.innerHTML = '';
+        _categories.forEach(function(c){
+          var sp = document.createElement('span');
+          sp.className = 'cat-tag'; sp.dataset.cat = c.id;
+          var rb = document.createElement('button');
+          rb.type='button'; rb.style.cssText='border:none;background:none;cursor:pointer;color:#fca5a5;font-size:.8rem;margin-left:3px';
+          rb.textContent='\u2715';
+          (function(catId,catEl){ rb.onclick=function(){ removeCategory(catId, catEl); }; })(c.id, sp);
+          sp.appendChild(document.createTextNode(c.label + ' '));
+          sp.appendChild(rb);
+          list.appendChild(sp);
+        });      }
+    }
+  }catch(e){ console.warn('loadCategories:', e); }
+}
+
 // ── CONNECTION TEST ──
 function testConnection() {
   // Show result in a toast + a dedicated status div in the admin panel
@@ -2764,6 +2886,7 @@ function cfgTab(id, btn){
   if(id==='prices') renderPriceGrid();
   if(id==='drive')  renderResourceList();
   if(id==='emailcfg') loadEmailConfig();
+  if(id==='categories') loadCategories();
   if(id==='stripe'){
     const i=document.getElementById('spk-inp');if(i)i.value=stripePK;
     const li=document.getElementById('live-link-inp');
@@ -3195,10 +3318,15 @@ async function processPayment(){
     cart=[]; updateCartUI();
     // Invalidate cache so main page reloads fresh courses on next view
     try{ localStorage.removeItem('epg_courses_v2'); }catch(e){}
-    // Reload public courses grid in background (shows new enrollment counts etc.)
+    // Reload public courses grid after modal closes
     setTimeout(function(){
-      if(typeof loadCoursesFromSheet === 'function') loadCoursesFromSheet();
-    }, 1500);
+      if(typeof loadCoursesFromSheet === 'function'){
+        loadCoursesFromSheet().then(function(){
+          // Refresh contact select options
+          if(typeof updateContactSelect === 'function') updateContactSelect();
+        });
+      }
+    }, 2000);
 
   }catch(ex){
     er.textContent='Error al procesar: '+ex.message+'. Intenta de nuevo.';
@@ -3648,26 +3776,42 @@ function openNewClass(keyEnc){
 }
 
 function saveNewClass(keyEnc){
-  const key=decodeURIComponent(keyEnc);
-  const week    =parseInt(document.getElementById('ncl-week-'+keyEnc).value)||1;
-  const vid     =(document.getElementById('ncl-vid-'+keyEnc)||{value:''}).value.trim();
-  const title   =document.getElementById('ncl-title-'+keyEnc).value.trim();
-  const desc    =document.getElementById('ncl-desc-'+keyEnc).value.trim();
-  const zoomUrl =(document.getElementById('ncl-zoom-'+keyEnc)||{value:''}).value.trim();
-  const recUrl  =(document.getElementById('ncl-rec-'+keyEnc)||{value:''}).value.trim();
-  if(!title){toast('El título es obligatorio','err');return;}
+  const key     = decodeURIComponent(keyEnc);
+  const week    = parseInt(document.getElementById('ncl-week-'+keyEnc).value)||1;
+  const vid     = (document.getElementById('ncl-vid-'+keyEnc)||{value:''}).value.trim();
+  const title   = document.getElementById('ncl-title-'+keyEnc).value.trim();
+  const desc    = document.getElementById('ncl-desc-'+keyEnc).value.trim();
+  const zoomUrl = (document.getElementById('ncl-zoom-'+keyEnc)||{value:''}).value.trim();
+  const recUrl  = (document.getElementById('ncl-rec-'+keyEnc)||{value:''}).value.trim();
+
+  if(!title){ toast('El título de la clase es obligatorio','err'); return; }
   if(!COURSE_DATA[key]) return;
-  const newId=COURSE_DATA[key].classes.length
+
+  const newId = COURSE_DATA[key].classes.length
     ? Math.max(...COURSE_DATA[key].classes.map(c=>c.id))+1 : 1;
-  COURSE_DATA[key].classes.push({id:newId,week,title,desc,videoId:vid,zoomUrl,recordedUrl:recUrl,resources:[],docs:[]});
-  document.getElementById('newcls-'+keyEnc).classList.remove('open');
-  document.getElementById('clslist-'+keyEnc).innerHTML=renderClassRows(key);
-  renderAdminCourseList();
-  const _cId1 = Object.keys(CATALOG).find(k=>CATALOG[k].name.includes(key.split(' ')[0]))||key.toLowerCase().replace(/[^a-z0-9]/g,'_');
-  const _newCls = COURSE_DATA[key].classes[COURSE_DATA[key].classes.length-1];
-  saveClassToSheet(_cId1, _newCls).then(ok=>
-    toast(ok ? '✅ Clase guardada en Sheets: '+title : '✅ Clase agregada localmente')
-  );
+  COURSE_DATA[key].classes.push({id:newId, week, title, desc, videoId:vid, zoomUrl, recordedUrl:recUrl, resources:[], docs:[]});
+
+  // ── Clear class input fields but KEEP course expanded ──
+  ['ncl-week-','ncl-title-','ncl-desc-','ncl-zoom-','ncl-rec-'].forEach(prefix=>{
+    const el = document.getElementById(prefix+keyEnc);
+    if(el) el.value = prefix.includes('week') ? '1' : '';
+  });
+  // Re-render only the class list (not the whole admin list)
+  const clsListEl = document.getElementById('clslist-'+keyEnc);
+  if(clsListEl) clsListEl.innerHTML = renderClassRows(key);
+  // Keep course card expanded — do NOT call renderAdminCourseList()
+  // Focus week field for quick next entry
+  const weekEl = document.getElementById('ncl-week-'+keyEnc);
+  if(weekEl) setTimeout(()=>weekEl.focus(), 100);
+
+  // Save to Sheet
+  const courseId = Object.keys(CATALOG).find(k=>CATALOG[k].sheetName===key || CATALOG[k].name===key) || key.toLowerCase().replace(/[^a-z0-9]/g,'_');
+  const newCls   = COURSE_DATA[key].classes[COURSE_DATA[key].classes.length-1];
+  saveClassToSheet(courseId, newCls).then(ok=>{
+    toast(ok ? '✅ Clase '+newId+' guardada: '+title : '⚠️ Clase agregada localmente (sin conexión)');
+    // Invalidate cache
+    try{ localStorage.removeItem('epg_courses_v2'); }catch(e){}
+  });
 }
 
 function openEditClass(keyEnc,idx){
@@ -3713,28 +3857,55 @@ function openNewCourse(){
   f.style.display=f.style.display==='none'?'block':'none';
 }
 
-function saveNewCourse(){
-  const name =document.getElementById('nc-name').value.trim();
-  const icon =document.getElementById('nc-icon').value.trim()||'📚';
-  const desc =document.getElementById('nc-desc').value.trim();
-  const price=parseInt(document.getElementById('nc-price').value)||0;
-  const orig =parseInt(document.getElementById('nc-orig').value)||0;
-  if(!name){toast('El nombre del curso es obligatorio','err');return;}
-  if(COURSE_DATA[name]){toast('Ya existe un curso con ese nombre','err');return;}
-  // Add to COURSE_DATA
-  COURSE_DATA[name]={title:name,classes:[]};
-  // Add to CATALOG
-  const id='course_'+Date.now();
-  CATALOG[id]={id,name,desc:desc||'Nuevo curso',icon,price,origPrice:orig};
-  // Add to course options list for contact form
-  if(!courseOpts.includes(name)) courseOpts.push(name);
-  document.getElementById('new-course-form').style.display='none';
-  // Clear form
-  ['nc-name','nc-icon','nc-desc','nc-price','nc-orig'].forEach(id=>{
-    const el=document.getElementById(id);if(el)el.value='';
-  });
-  toast('✅ Curso creado: '+name);
-  renderAdminCourseList();
+async function saveNewCourse(){
+  const name   = document.getElementById('nc-name').value.trim();
+  const catEl  = document.getElementById('nc-category');
+  const catVal = catEl ? catEl.value : '';
+  const icon   = document.getElementById('nc-icon').value.trim()||'📚';
+  const desc   = document.getElementById('nc-desc').value.trim();
+  const price  = parseInt(document.getElementById('nc-price').value)||0;
+  const orig   = parseInt(document.getElementById('nc-orig').value)||0;
+  const activeEl = document.getElementById('nc-active');
+  const active = activeEl ? activeEl.value !== 'false' : true;
+
+  if(!name){ toast('El nombre del curso es obligatorio','err'); return; }
+  if(COURSE_DATA[name]){ toast('Ya existe un curso con ese nombre','err'); return; }
+  if(!SCRIPT_URL){ toast('Sin conexión al servidor','err'); return; }
+
+  // Auto-generate course_id
+  const base     = (catVal||name).toLowerCase().replace(/[^a-z0-9]+/g,'_').substring(0,20);
+  const courseId = base + '_' + Date.now().toString(36);
+
+  const btn = document.querySelector('#new-course-form .btn-sm.orange');
+  if(btn){ btn.disabled=true; btn.textContent='⏳ Guardando...'; }
+
+  try{
+    const r = await callAppsScript({
+      action:'saveCourse', course_id:courseId,
+      name:name, title:name,
+      description:desc, price:price, orig_price:orig,
+      active:active, icon_b64:icon
+    });
+    if(!r || !r.success){
+      toast((r&&r.error)||'Error al guardar en Sheets','err');
+      if(btn){ btn.disabled=false; btn.textContent='💾 Crear Curso'; }
+      return;
+    }
+    COURSE_DATA[name] = {title:name, classes:[]};
+    CATALOG[courseId] = {id:courseId, name:name, desc:desc||'', icon:icon, price:price, origPrice:orig, active:true, sheetName:name};
+    if(!courseOpts.includes(name)) courseOpts.push(name);
+    document.getElementById('new-course-form').style.display='none';
+    ['nc-name','nc-icon','nc-desc','nc-price','nc-orig'].forEach(function(fid){
+      var el=document.getElementById(fid); if(el) el.value='';
+    });
+    if(catEl) catEl.value='';
+    try{ localStorage.removeItem('epg_courses_v2'); }catch(e){}
+    toast('Curso guardado: '+name);
+    renderAdminCourseList();
+  }catch(ex){
+    toast('Error: '+ex.message,'err');
+    if(btn){ btn.disabled=false; btn.textContent='💾 Crear Curso'; }
+  }
 }
 
 // ================================================================
