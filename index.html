@@ -425,15 +425,15 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
     .social-btn.facebook{background:#1877f2}
 
     /* ── ADMIN VERTICAL SIDEBAR LAYOUT ──────────────────────── */
-    .admin-layout{display:grid;grid-template-columns:220px 1fr;gap:0;min-height:calc(100vh - 84px - 2rem)}
-    .admin-sidebar-nav{background:var(--navy);padding:0;display:flex;flex-direction:column;position:sticky;top:84px;height:calc(100vh - 84px);overflow-y:auto;flex-shrink:0}
+    .admin-layout{display:grid;grid-template-columns:180px 1fr;gap:0;min-height:calc(100vh - 84px - 2rem);width:100%}
+    .admin-sidebar-nav{background:var(--navy);padding:0;display:flex;flex-direction:column;position:sticky;top:84px;height:calc(100vh - 84px);overflow-y:auto;flex-shrink:0;width:180px}
     .asn-header{padding:1.2rem 1.1rem .9rem;border-bottom:1px solid rgba(255,255,255,.1)}
     .asn-title{font-family:"Nunito Sans",sans-serif;font-weight:900;font-size:.7rem;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.5)}
-    .asn-btn{display:flex;align-items:center;gap:.6rem;width:100%;padding:.85rem 1.1rem;background:transparent;border:none;border-left:3px solid transparent;color:rgba(255,255,255,.7);font-family:"Nunito Sans",sans-serif;font-weight:700;font-size:.82rem;cursor:pointer;text-align:left;transition:all .18s;line-height:1.3}
+    .asn-btn{display:flex;align-items:center;gap:.5rem;width:100%;padding:.7rem .8rem;background:transparent;border:none;border-left:3px solid transparent;color:rgba(255,255,255,.7);font-family:"Nunito Sans",sans-serif;font-weight:700;font-size:.75rem;cursor:pointer;text-align:left;transition:all .18s;line-height:1.3}
     .asn-btn:hover{background:rgba(255,255,255,.08);color:white;border-left-color:rgba(247,148,29,.5)}
     .asn-btn.asn-active{background:rgba(247,148,29,.15);color:white;border-left-color:var(--orange)}
     .asn-ico{font-size:1rem;flex-shrink:0;width:20px;text-align:center}
-    .admin-content-area{padding:1.5rem;overflow-y:auto;background:var(--off);min-width:0}
+    .admin-content-area{padding:1rem 1.2rem;overflow-y:auto;background:var(--off);min-width:0;width:100%;box-sizing:border-box}
     .admin-panel{background:transparent}
     .admin-panel h4{display:none} /* hidden — sidebar replaces it */
     @media(max-width:768px){
@@ -454,8 +454,8 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
     .pdf-progress{height:4px;background:var(--mid);border-radius:2px;margin-top:.6rem;overflow:hidden;display:none}
     .pdf-progress-bar{height:100%;background:var(--orange);border-radius:2px;transition:width .3s;width:0%}
     /* ── CONTACT MANAGEMENT ── */
-    .contact-table-wrap{overflow-x:auto;margin-top:.75rem;display:block}
-    .contact-mgmt-table{width:100%;border-collapse:collapse;font-size:.78rem;min-width:900px}
+    .contact-table-wrap{overflow-x:auto;margin-top:.75rem;display:block;width:100%}
+    .contact-mgmt-table{width:100%;border-collapse:collapse;font-size:.75rem;min-width:0;table-layout:auto}
     .contact-mgmt-table th{background:var(--navy);color:white;padding:9px 11px;text-align:left;font-family:"Nunito Sans",sans-serif;font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
     .contact-mgmt-table td{padding:8px 10px;border-bottom:1px solid var(--mid);vertical-align:middle}
     .contact-mgmt-table tr:hover td{background:#fafbff}
@@ -1759,23 +1759,39 @@ async function uploadPdfToSheet(file, keyEnc, idx){
 // ================================================================
 let _allContacts = []; // cache loaded contacts
 
-async function loadContacts(){
+async function loadContacts(forceRefresh){
   const w = document.getElementById('contacts-wrap');
+  const CACHE_KEY = 'epg_contacts_v1';
+  const CACHE_TTL = 5*60*1000;
+
+  if(!forceRefresh){
+    try{
+      const cached = JSON.parse(localStorage.getItem(CACHE_KEY)||'null');
+      if(cached && (Date.now()-cached.ts) < CACHE_TTL){
+        _allContacts = cached.data;
+        renderContactsTable(_allContacts);
+        w.insertAdjacentHTML('afterbegin','<p style="font-size:.68rem;color:var(--muted);padding:4px 8px">⚡ Caché — <a href="#" onclick="loadContacts(true);return false" style="color:var(--orange)">Actualizar</a></p>');
+        return;
+      }
+    }catch(e){}
+  }
+
   w.innerHTML='<p class="empty-adm">⏳ Cargando contactos...</p>';
   if(!SCRIPT_URL){ w.innerHTML='<p class="empty-adm">⚠️ Configura el SCRIPT_URL primero.</p>'; return; }
   try{
     const d = await callAppsScript({action:'getContacts'}) || {};
     if(d.code==='UNAUTHORIZED'){ w.innerHTML='<p class="empty-adm">⚠️ Sesión expirada.</p>'; return; }
     _allContacts = (d.contacts||[]).map((c,i)=>({
-      _row:   i+2, // Sheet row (1=header, 2=first data)
+      _row:   i+2,
       nombre: c[0]||'', email: c[1]||'', telefono: c[2]||'',
       curso:  c[3]||'', mensaje: c[4]||'', fecha: c[5]||'',
       estado: c[6]||'nuevo', ultima_gestion: c[7]||'',
       fecha_contacto: c[8]||'', medio: c[9]||'', fecha_seguimiento: c[10]||''
     }));
+    try{ localStorage.setItem(CACHE_KEY, JSON.stringify({data:_allContacts, ts:Date.now()})); }catch(e){}
     renderContactsTable(_allContacts);
   } catch(e){
-    w.innerHTML=`<p style="color:#991b1b;font-size:.82rem">Error: ${e.message}</p>`;
+    w.innerHTML='<p style="color:#991b1b;font-size:.82rem">Error: '+e.message+'</p>';
   }
 }
 
@@ -2346,7 +2362,17 @@ function openPortal(u){
     const adminArea = document.getElementById('admin-area');
     adminArea.style.display = 'block';
 
-    loadCoursesFromSheet().then(()=>{
+    // Batch load ALL admin data in parallel — one JSONP call
+    Promise.all([
+      loadCoursesFromSheet(),
+      SCRIPT_URL ? callAppsScript({action:'getAdminDashboard'}).then(d=>{
+        if(d && !d.error){
+          try{ localStorage.setItem('epg_contacts_v1', JSON.stringify({data:(d.contacts||[]).map((c,i)=>({_row:i+2,nombre:c[0]||'',email:c[1]||'',telefono:c[2]||'',curso:c[3]||'',mensaje:c[4]||'',fecha:c[5]||'',estado:c[6]||'nuevo',ultima_gestion:c[7]||'',fecha_contacto:c[8]||'',medio:c[9]||'',fecha_seguimiento:c[10]||''})), ts:Date.now()})); }catch(e){}
+          try{ localStorage.setItem('epg_orders_v1',   JSON.stringify({data:d.orders||[],  ts:Date.now()})); }catch(e){}
+          try{ localStorage.setItem('epg_pricelog_v1', JSON.stringify({data:d.logs||[],    ts:Date.now()})); }catch(e){}
+        }
+      }).catch(()=>{}) : Promise.resolve()
+    ]).then(()=>{
       renderPriceGrid();
       renderCourseOptsList();
       renderAdminCourseList();
@@ -2796,14 +2822,58 @@ function updateContactSelect(){
 }
 
 
-async function loadOrders(){
-  const w=document.getElementById('orders-wrap');
-  w.innerHTML='<p style="color:var(--muted);font-size:.82rem">⏳ Cargando...</p>';
-  if(!SCRIPT_URL){w.innerHTML='<div style="background:#fffbeb;border:1px solid #f59e0b;border-radius:8px;padding:1rem;font-size:.82rem;color:#92400e"><strong>⚠️ SCRIPT_URL no configurada.</strong></div>';return}
-  try{const d=await authFetch({action:'getOrders'}) || {};
-    if(d.orders?.length){w.innerHTML=`<div style="overflow-x:auto"><table class="dtable"><thead><tr><th>Nombre</th><th>Correo</th><th>Teléfono</th><th>Cursos</th><th>Total</th><th>Fecha</th></tr></thead><tbody>${d.orders.map(o=>`<tr><td>${o[0]||''}</td><td>${o[1]||''}</td><td>${o[2]||''}</td><td>${o[3]||''}</td><td style="color:var(--orange);font-weight:700">$${o[4]||0}</td><td>${o[5]||''}</td></tr>`).join('')}</tbody></table></div>`}
-    else w.innerHTML='<p style="color:var(--muted);font-size:.82rem;font-style:italic">Sin órdenes aún.</p>'
-  }catch(e){w.innerHTML='<p style="color:#c53030;font-size:.82rem">Error al cargar órdenes.</p>'}
+
+function renderOrders(orders){
+  const w = document.getElementById('orders-wrap');
+  if(!w) return;
+  if(!orders.length){
+    w.innerHTML='<p class="empty-adm">No hay órdenes registradas.</p>';
+    return;
+  }
+  w.innerHTML='<div style="overflow-x:auto"><table class="user-table">'
+    +'<thead><tr><th>Nombre</th><th>Correo</th><th>Teléfono</th><th>Cursos</th><th>Total</th><th>Pago ID</th><th>Fecha</th></tr></thead>'
+    +'<tbody>'+orders.map(function(o){
+      return '<tr>'
+        +'<td style="font-weight:700">'+(o[0]||'')+'</td>'
+        +'<td style="font-size:.75rem">'+(o[1]||'')+'</td>'
+        +'<td style="font-size:.75rem">'+(o[2]||'')+'</td>'
+        +'<td style="font-size:.75rem;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(o[3]||'')+'">'+(o[3]||'')+'</td>'
+        +'<td style="font-weight:700;color:var(--orange)">$'+parseFloat(o[4]||0).toLocaleString()+'</td>'
+        +'<td style="font-family:monospace;font-size:.65rem;color:var(--muted)">'+(o[5]||'').substring(0,20)+'...</td>'
+        +'<td style="font-size:.75rem;white-space:nowrap">'+(o[6]||'')+'</td>'
+        +'</tr>';
+    }).join('')
+    +'</tbody></table></div>';
+}
+
+async function loadOrders(forceRefresh){
+  const w = document.getElementById('orders-wrap');
+  const CACHE_KEY = 'epg_orders_v1';
+  const CACHE_TTL = 3*60*1000;
+  if(!w) return;
+
+  if(!forceRefresh){
+    try{
+      const cached = JSON.parse(localStorage.getItem(CACHE_KEY)||'null');
+      if(cached && (Date.now()-cached.ts) < CACHE_TTL){
+        renderOrders(cached.data);
+        w.insertAdjacentHTML('afterbegin','<p style="font-size:.68rem;color:var(--muted);padding:4px 8px">⚡ Desde caché — <a href="#" onclick="loadOrders(true);return false" style="color:var(--orange)">Actualizar</a></p>');
+        return;
+      }
+    }catch(e){}
+  }
+
+  w.innerHTML='<p class="empty-adm">⏳ Cargando órdenes...</p>';
+  if(!SCRIPT_URL){ w.innerHTML='<p class="empty-adm">⚠️ Sin URL del servidor.</p>'; return; }
+  try{
+    const d = await callAppsScript({action:'getOrders'}) || {};
+    if(d.code==='UNAUTHORIZED'){ w.innerHTML='<p class="empty-adm">⚠️ Sesión expirada.</p>'; return; }
+    const orders = d.orders||[];
+    try{ localStorage.setItem(CACHE_KEY, JSON.stringify({data:orders, ts:Date.now()})); }catch(e){}
+    renderOrders(orders);
+  }catch(e){
+    w.innerHTML='<p style="color:#991b1b;font-size:.82rem">Error: '+e.message+'</p>';
+  }
 }
 
 // ── CART ──
@@ -3847,22 +3917,56 @@ async function viewPriceLog(keyEnc){
   } catch(e){ el.innerHTML='<p style="color:#991b1b;font-size:.78rem">Error: '+e.message+'</p>'; }
 }
 
-async function loadPriceLog(){
+
+function renderPriceLog(logs){
   const w = document.getElementById('pricelog-wrap');
   if(!w) return;
-  w.innerHTML='<p class="empty-adm">⏳ Cargando...</p>';
-  if(!SCRIPT_URL){ w.innerHTML='<p class="empty-adm">⚠️ Configura el SCRIPT_URL primero.</p>'; return; }
+  if(!logs.length){
+    w.innerHTML='<p class="empty-adm">No hay cambios de precio registrados.</p>';
+    return;
+  }
+  w.innerHTML='<div style="overflow-x:auto"><table class="user-table">'
+    +'<thead><tr><th>Fecha</th><th>Usuario</th><th>Curso</th><th>Precio ant.</th><th>Precio nuevo</th></tr></thead>'
+    +'<tbody>'+logs.map(function(l){
+      return '<tr>'
+        +'<td style="font-size:.75rem;white-space:nowrap">'+(l[0]||'')+'</td>'
+        +'<td style="font-size:.75rem">'+(l[1]||'')+'</td>'
+        +'<td style="font-size:.75rem">'+(l[3]||l[2]||'')+'</td>'
+        +'<td style="text-decoration:line-through;color:var(--muted)">$'+(l[4]||0)+'</td>'
+        +'<td style="font-weight:700;color:var(--orange)">$'+(l[5]||0)+'</td>'
+        +'</tr>';
+    }).join('')
+    +'</tbody></table></div>';
+}
+
+async function loadPriceLog(forceRefresh){
+  const w = document.getElementById('pricelog-wrap');
+  const CACHE_KEY = 'epg_pricelog_v1';
+  const CACHE_TTL = 5*60*1000;
+  if(!w) return;
+
+  if(!forceRefresh){
+    try{
+      const cached = JSON.parse(localStorage.getItem(CACHE_KEY)||'null');
+      if(cached && (Date.now()-cached.ts) < CACHE_TTL){
+        renderPriceLog(cached.data);
+        w.insertAdjacentHTML('afterbegin','<p style="font-size:.68rem;color:var(--muted);padding:4px 8px">⚡ Desde caché — <a href="#" onclick="loadPriceLog(true);return false" style="color:var(--orange)">Actualizar</a></p>');
+        return;
+      }
+    }catch(e){}
+  }
+
+  w.innerHTML='<p class="empty-adm">⏳ Cargando registro de precios...</p>';
+  if(!SCRIPT_URL){ w.innerHTML='<p class="empty-adm">⚠️ Sin URL del servidor.</p>'; return; }
   try{
-    const d = await callAppsScript({action:'getPriceLog'});
+    const d = await callAppsScript({action:'getPriceLog'}) || {};
+    if(d.code==='UNAUTHORIZED'){ w.innerHTML='<p class="empty-adm">⚠️ Sesión expirada.</p>'; return; }
     const logs = d.logs||[];
-    if(!logs.length){ w.innerHTML='<p class="empty-adm">Sin cambios de precio registrados aún.</p>'; return; }
-    w.innerHTML=`<div style="overflow-x:auto">
-      <table class="plog-table"><thead><tr><th>Fecha y Hora</th><th>Usuario</th><th>Curso</th><th>Precio Ant.</th><th>Precio Nuevo</th><th>Orig. Ant.</th><th>Orig. Nuevo</th></tr></thead>
-      <tbody>${logs.map(l=>{
-        const cls=(l[5]||0)>(l[4]||0)?'price-up':(l[5]||0)<(l[4]||0)?'price-down':'price-same';
-        return '<tr><td style="white-space:nowrap;font-size:.72rem">'+(l[0]||'')+'</td><td style="font-size:.72rem">'+(l[1]||'')+'</td><td style="font-weight:700">'+(l[3]||l[2]||'')+'</td><td>$'+(l[4]||0).toLocaleString()+'</td><td class="'+cls+'">$'+(l[5]||0).toLocaleString()+((l[5]||0)>(l[4]||0)?' ▲':(l[5]||0)<(l[4]||0)?' ▼':' =')+'</td><td style="color:var(--muted)">$'+(l[6]||0).toLocaleString()+'</td><td style="color:var(--muted)">$'+(l[7]||0).toLocaleString()+'</td></tr>';
-      }).join('')}</tbody></table></div>`;
-  } catch(e){ w.innerHTML='<p style="color:#991b1b;font-size:.82rem">Error: '+e.message+'</p>'; }
+    try{ localStorage.setItem(CACHE_KEY, JSON.stringify({data:logs, ts:Date.now()})); }catch(e){}
+    renderPriceLog(logs);
+  }catch(e){
+    w.innerHTML='<p style="color:#991b1b;font-size:.82rem">Error: '+e.message+'</p>';
+  }
 }
 
 // ── INIT ──
