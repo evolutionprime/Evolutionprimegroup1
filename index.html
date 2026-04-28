@@ -1394,12 +1394,12 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
 // ══════════════════════════════════════════════
 
 // ── CONFIGURACIÓN GLOBAL ──────────────────────────────────────
-const SHEET_ID   = '1mlu9U2j52sl75jQ6bU1-ER3aOJG4FHrtebOYsPOQlCQ';
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzrcXeOviMtaJeFF9Ko70tenskmIPcSWy4bXDL8zLzicrh4OLZf9fbMF6K0ALx7phyxAw/exec';
-const DRIVE_FOLDER_ID = '1rcEHkWYerJvEg4teKrOtZ4yBkyVx3Jis';
+var SHEET_ID     = '1mlu9U2j52sl75jQ6bU1-ER3aOJG4FHrtebOYsPOQlCQ';
+var SCRIPT_URL   = 'https://script.google.com/macros/s/AKfycbzrcXeOviMtaJeFF9Ko70tenskmIPcSWy4bXDL8zLzicrh4OLZf9fbMF6K0ALx7phyxAw/exec';
+var DRIVE_FOLDER_ID   = '1rcEHkWYerJvEg4teKrOtZ4yBkyVx3Jis';
 
 // ── ESTADO GLOBAL ─────────────────────────────────────────────
-const DEMO_USERS  = [];          // Sin usuarios demo — todo desde Sheets
+var DEMO_USERS    = [];          // Sin usuarios demo — todo desde Sheets
 let COURSE_DATA   = {};          // Cargado desde Sheets
 let CATALOG       = {};          // Cargado desde Sheets
 let courseOpts    = [];          // Cargado desde Sheets
@@ -3742,20 +3742,21 @@ document.getElementById('portal').addEventListener('contextmenu',e=>e.preventDef
     clearSession();
   }
 })();
-</script>
-<script>
-// EPG v2.8 — Startup check
+
+// ── STARTUP DIAGNOSTIC (inside main script — same scope as SCRIPT_URL) ──
 (function(){
-  var badge = document.createElement('div');
-  badge.id = 'epg-ver';
-  badge.style.cssText = 'position:fixed;bottom:6px;left:6px;background:rgba(11,44,77,.85);color:#fff;font-size:10px;padding:3px 8px;border-radius:4px;z-index:99999;font-family:monospace;pointer-events:none';
-  var urlOK = (typeof SCRIPT_URL !== 'undefined' && SCRIPT_URL && SCRIPT_URL.indexOf('AKfycbz') > -1);
-  badge.textContent = 'v2.8 | ' + (urlOK ? '✓ URL' : '✗ URL MISSING');
-  badge.style.background = urlOK ? 'rgba(22,101,52,.9)' : 'rgba(153,27,27,.9)';
-  document.body.appendChild(badge);
-  setTimeout(function(){ var b=document.getElementById('epg-ver'); if(b)b.remove(); }, 8000);
-  if(!urlOK) console.error('SCRIPT_URL missing or wrong! Courses and login will not work.');
-  else console.log('EPG v2.8 OK. SCRIPT_URL confirmed.');
+  document.addEventListener('DOMContentLoaded', function(){
+    var badge = document.createElement('div');
+    badge.id = 'epg-ver';
+    badge.style.cssText = 'position:fixed;bottom:6px;left:6px;background:rgba(11,44,77,.85);color:#fff;font-size:10px;padding:3px 8px;border-radius:4px;z-index:99999;font-family:monospace;pointer-events:none';
+    var urlOK = (typeof SCRIPT_URL === 'string' && SCRIPT_URL.length > 10);
+    badge.textContent = 'v2.8 | ' + (urlOK ? '✓ OK' : '✗ URL MISSING');
+    badge.style.background = urlOK ? 'rgba(22,101,52,.9)' : 'rgba(153,27,27,.9)';
+    document.body.appendChild(badge);
+    setTimeout(function(){ var b=document.getElementById('epg-ver'); if(b)b.remove(); }, 8000);
+    if(urlOK) console.log('EPG v2.8 | SCRIPT_URL: ' + SCRIPT_URL.substring(0,50) + '...');
+    else console.error('EPG v2.8 | SCRIPT_URL is UNDEFINED or empty!');
+  });
 })();
 </script>
 </body>
