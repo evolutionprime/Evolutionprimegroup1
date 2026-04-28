@@ -454,10 +454,21 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
     .pdf-progress{height:4px;background:var(--mid);border-radius:2px;margin-top:.6rem;overflow:hidden;display:none}
     .pdf-progress-bar{height:100%;background:var(--orange);border-radius:2px;transition:width .3s;width:0%}
     /* ── CONTACT MANAGEMENT ── */
-    .contact-table-wrap{overflow-x:auto;margin-top:.75rem;display:block;width:100%}
-    .contact-mgmt-table{width:100%;border-collapse:collapse;font-size:.75rem;min-width:0;table-layout:auto}
-    .contact-mgmt-table th{background:var(--navy);color:white;padding:9px 11px;text-align:left;font-family:"Nunito Sans",sans-serif;font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
-    .contact-mgmt-table td{padding:8px 10px;border-bottom:1px solid var(--mid);vertical-align:middle}
+    .contact-table-wrap{overflow-x:visible;margin-top:.75rem;display:block;width:100%}
+    /* Contact table column widths — fits without horizontal scroll */
+    .contact-mgmt-table th:nth-child(1),.contact-mgmt-table td:nth-child(1){width:11%}  /* Nombre */
+    .contact-mgmt-table th:nth-child(2),.contact-mgmt-table td:nth-child(2){width:16%}  /* Correo */
+    .contact-mgmt-table th:nth-child(3),.contact-mgmt-table td:nth-child(3){width:10%}  /* Teléfono */
+    .contact-mgmt-table th:nth-child(4),.contact-mgmt-table td:nth-child(4){width:13%}  /* Curso */
+    .contact-mgmt-table th:nth-child(5),.contact-mgmt-table td:nth-child(5){width:14%}  /* Fecha */
+    .contact-mgmt-table th:nth-child(6),.contact-mgmt-table td:nth-child(6){width:9%}   /* Estado */
+    .contact-mgmt-table th:nth-child(7),.contact-mgmt-table td:nth-child(7){width:11%}  /* Último contacto */
+    .contact-mgmt-table th:nth-child(8),.contact-mgmt-table td:nth-child(8){width:11%}  /* Seguimiento */
+    .contact-mgmt-table th:nth-child(9),.contact-mgmt-table td:nth-child(9){width:8%;white-space:nowrap}  /* Gestionar */
+
+    .contact-mgmt-table{width:100%;border-collapse:collapse;font-size:.75rem;table-layout:fixed}
+    .contact-mgmt-table th{background:var(--navy);color:white;padding:7px 8px;text-align:left;font-family:"Nunito Sans",sans-serif;font-weight:700;font-size:.68rem;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .contact-mgmt-table td{padding:6px 8px;border-bottom:1px solid var(--mid);vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0}
     .contact-mgmt-table tr:hover td{background:#fafbff}
     .status-badge{font-size:.65rem;font-weight:800;padding:3px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
     .status-new{background:#eff6ff;color:#1e40af}
@@ -1258,7 +1269,7 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
             <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
               <select id="filter-status" class="pinput" style="width:180px;font-size:.78rem" onchange="filterContacts()">
                 <option value="">Todos los estados</option>
-                <option value="nuevo">Nuevo</option>
+                <option value="nuevo" selected>Nuevo</option>
                 <option value="adquirio">Adquirió producto</option>
                 <option value="no-interesado">No está interesado</option>
                 <option value="seguimiento">Contactar en otra fecha</option>
@@ -1770,6 +1781,7 @@ async function loadContacts(forceRefresh){
       if(cached && (Date.now()-cached.ts) < CACHE_TTL){
         _allContacts = cached.data;
         renderContactsTable(_allContacts);
+        filterContacts(); // apply current filter after cache render
         w.insertAdjacentHTML('afterbegin','<p style="font-size:.68rem;color:var(--muted);padding:4px 8px">⚡ Caché — <a href="#" onclick="loadContacts(true);return false" style="color:var(--orange)">Actualizar</a></p>');
         return;
       }
@@ -1790,6 +1802,7 @@ async function loadContacts(forceRefresh){
     }));
     try{ localStorage.setItem(CACHE_KEY, JSON.stringify({data:_allContacts, ts:Date.now()})); }catch(e){}
     renderContactsTable(_allContacts);
+    filterContacts(); // apply current filter (default: nuevo)
   } catch(e){
     w.innerHTML='<p style="color:#991b1b;font-size:.82rem">Error: '+e.message+'</p>';
   }
