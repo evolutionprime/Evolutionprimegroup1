@@ -1457,13 +1457,14 @@ function renderCoursePicker(preselected){
 
   picker.innerHTML = courses.map(c => {
     const sel = _selectedCourses.includes(c.name);
-    return `<div class="cp-item${sel?' selected':''}" onclick="toggleCoursePicker('${c.name.replace(/'/g,"\'")}',this)">
-      <div class="cp-checkbox">${sel?'✓':''}</div>
-      <div>
-        <div class="cp-label">${c.icon||'📚'} ${c.name}</div>
-        ${c.desc?`<div class="cp-meta">${c.desc}</div>`:''}
-      </div>
-    </div>`;
+    var _cpName = c.name;
+    return '<div class="cp-item' + (sel?' selected':'') + '" data-cname="' + _cpName.replace(/"/g,'&quot;') + '" onclick="toggleCoursePickerEl(this)">' +
+      '<div class="cp-checkbox">' + (sel?'✓':'') + '</div>' +
+      '<div>' +
+        '<div class="cp-label">' + (c.icon||'📚') + ' ' + _cpName + '</div>' +
+        (c.desc?'<div class="cp-meta">'+c.desc+'</div>':'') +
+      '</div>' +
+    '</div>';
   }).join('');
 
   updateSelectedTags();
@@ -1508,9 +1509,9 @@ function updateSelectedTags(){
   }
 
   tagsEl.innerHTML = _selectedCourses.map(c =>
-    `<span class="cp-tag">${c}
-      <button type="button" onclick="removeCourseFromPicker('${c.replace(/'/g,"\'")}')">✕</button>
-    </span>`
+    '<span class="cp-tag">' + c +
+      '<button type="button" data-cname="' + c.replace(/"/g,'&quot;') + '" onclick="removeCoursePickerBtn(this)">✕</button>' +
+    '</span>'
   ).join('');
 
   if(hidden) hidden.value = _selectedCourses.join(', ');
@@ -2965,6 +2966,23 @@ async function deleteUser(email){
   }catch(e){ toast('Error: '+e.message,'err'); }
 }
 
+
+// ── DATA-ATTRIBUTE BUTTON HELPERS (avoid quote escaping in template literals) ──
+function toggleCoursePickerEl(el){
+  var name = el.dataset.cname || el.getAttribute('data-cname');
+  toggleCoursePicker(name, el);
+}
+function removeCoursePickerBtn(btn){
+  var name = btn.dataset.cname || btn.getAttribute('data-cname');
+  removeCourseFromPicker(name);
+}
+function editUserBtn(btn){
+  editUser(btn.dataset.email, btn.dataset.name, btn.dataset.role, btn.dataset.courses);
+}
+function deleteUserBtn(btn){
+  deleteUser(btn.dataset.email);
+}
+
 async function loadUsers(){
   const w=document.getElementById('users-wrap');
   w.innerHTML='<p class="empty-adm">⏳ Cargando usuarios...</p>';
@@ -2982,8 +3000,8 @@ async function loadUsers(){
           <td><span class="badge-${u.role==='admin'?'admin':'student'}">${u.role==='admin'?'Admin':'Estudiante'}</span></td>
           <td style="font-size:.75rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${u.courses||''}">${u.courses||'—'}</td>
           <td style="white-space:nowrap;display:flex;gap:.3rem">
-            <button class="btn-icon" onclick="editUser('${u.email}','${(u.name||'').replace(/'/g,"\'")}','${u.role}','${(u.courses||'').replace(/'/g,"\'")}')">✏️</button>
-            <button class="btn-icon danger" onclick="deleteUser('${u.email}')">🗑️</button>
+            <button class="btn-icon" data-email="${u.email}" data-name="${(u.name||'').replace(/"/g,'&quot;')}" data-role="${u.role}" data-courses="${(u.courses||'').replace(/"/g,'&quot;')}" onclick="editUserBtn(this)">✏️</button>
+            <button class="btn-icon danger" data-email="${u.email}" onclick="deleteUserBtn(this)">🗑️</button>
           </td>
         </tr>`).join('')}
       </tbody></table></div>`;
@@ -3618,7 +3636,7 @@ document.getElementById('portal').addEventListener('contextmenu',e=>e.preventDef
         window.history.replaceState({}, '', window.location.pathname);
       } else if(d.already_active){
         banner.style.background = '#1e40af';
-        banner.innerHTML = '✅ Tu cuenta ya estaba activa. <a href="#" onclick="openLogin();document.getElementById('validation-banner').remove();return false" style="color:#93c5fd;text-decoration:underline;margin-left:8px">Inicia sesión →</a>';
+        banner.innerHTML = '✅ Tu cuenta ya estaba activa. <a href="#" onclick="openLogin();document.getElementById(&quot;validation-banner&quot;).remove();return false" style="color:#93c5fd;text-decoration:underline;margin-left:8px">Inicia sesión →</a>';
         window.history.replaceState({}, '', window.location.pathname);
       } else {
         banner.style.background = '#991b1b';
