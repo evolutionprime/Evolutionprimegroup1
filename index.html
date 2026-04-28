@@ -1134,9 +1134,8 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
       <div class="pay-ok" id="pay-ok" style="display:none">
         <div class="ok-ico">🎉</div>
         <h3>¡Pago Exitoso!</h3>
-        <div id="pay-ok-msg" style="font-size:.88rem;line-height:1.7;margin:.5rem 0 1rem"></div>
-        <p>Tu inscripción fue procesada. Recibirás un correo con tus datos de acceso.<br/><br/><strong style="color:var(--navy)">Bienvenido a Evolution Prime Group.</strong></p>
-        <br/><button class="btn-primary" onclick="closeCheckout()" style="margin:0 auto">Cerrar</button>
+        <div id="pay-ok-msg" style="font-size:.88rem;line-height:1.6;margin:.75rem 0 1.2rem;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:1rem;text-align:left"></div>
+        <button class="btn-primary" onclick="closeCheckout()" style="margin:0 auto">Cerrar y continuar</button>
       </div>
     </div>
   </div>
@@ -1345,6 +1344,17 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
           <!-- EMAIL CONFIG -->
           <div id="cfg-emailcfg" class="cfg-sec" style="display:none">
             <p style="color:var(--muted);font-size:.83rem;margin-bottom:1rem">Configura el correo de bienvenida que reciben los estudiantes al comprar un curso. Se guarda en Google Sheets.</p>
+            <div class="f2col">
+              <div class="cf-group">
+                <label>📧 Correo remitente (from)</label>
+                <input id="ec-sender-email" type="email" placeholder="info@evolutionprimegroup.com"/>
+                <p style="font-size:.68rem;color:var(--muted);margin-top:3px">Correo de tu cuenta Google. Si está vacío se usa el del propietario del Apps Script.</p>
+              </div>
+              <div class="cf-group">
+                <label>Nombre del remitente</label>
+                <input id="ec-sender-name" placeholder="Evolution Prime Group"/>
+              </div>
+            </div>
             <div class="cf-group">
               <label>Asunto del correo *</label>
               <input id="ec-subject" placeholder="Bienvenido a Evolution Prime Group"/>
@@ -1937,10 +1947,12 @@ async function loadEmailConfig(){
     const d = await callAppsScript({action:'getEmailConfig'});
     const cfg = d.config || {};
     const set = (id,key) => { const el=document.getElementById(id); if(el) el.value=cfg[key]||''; };
-    set('ec-subject',   'welcome_subject');
-    set('ec-body',      'welcome_body');
-    set('ec-signature', 'welcome_signature');
-    set('ec-logo',      'logo_drive_url');
+    set('ec-sender-email', 'sender_email');
+    set('ec-sender-name',  'sender_name');
+    set('ec-subject',      'welcome_subject');
+    set('ec-body',         'welcome_body');
+    set('ec-signature',    'welcome_signature');
+    set('ec-logo',         'logo_drive_url');
     if(st){ st.textContent='✅ Configuración cargada.'; st.style.background='#dcfce7'; st.style.color='#166534'; }
     setTimeout(()=>{ if(st) st.style.display='none'; }, 3000);
   } catch(e){
@@ -1956,6 +1968,8 @@ async function saveEmailConfig(){
   try{
     const r = await callAppsScript({
       action:              'saveEmailConfig',
+      sender_email:        get('ec-sender-email'),
+      sender_name:         get('ec-sender-name'),
       welcome_subject:     get('ec-subject'),
       welcome_body:        get('ec-body'),
       welcome_signature:   get('ec-signature'),
@@ -2729,14 +2743,25 @@ function closeCart(){document.getElementById('cart-overlay').classList.remove('o
 
 // ── CHECKOUT ──
 function openCheckout(){
-  if(!cart.length)return;closeCart();
+  if(!cart.length)return;
+  closeCart();
   const t=cartTotal();
-  document.getElementById('co-items').innerHTML=cart.map(i=>`<div class="co-item-row"><span>${i.icon||'📚'} ${i.name}</span><span style="color:var(--orange);font-weight:700">$${i.price.toLocaleString()}</span></div>`).join('');
+  document.getElementById('co-items').innerHTML=cart.map(i=>'<div class="co-item-row"><span>'+(i.icon||'📚')+' '+i.name+'</span><span style="color:var(--orange);font-weight:700">$'+i.price.toLocaleString()+'</span></div>').join('');
   document.getElementById('co-total').textContent='$'+t.toLocaleString();
   document.getElementById('btn-pay-amt').textContent='$'+t.toLocaleString();
-  document.getElementById('co-modal').classList.add('on');
+  // Always reset form state
   document.getElementById('pay-ok').style.display='none';
   document.getElementById('co-content').style.display='block';
+  ['pay-n','pay-a','pay-e','pay-t'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  const er=document.getElementById('pay-err'); if(er) er.style.display='none';
+  const se=document.getElementById('stripe-err'); if(se) se.textContent='';
+  const btn=document.getElementById('btn-pay');
+  if(btn){ btn.disabled=false; btn.innerHTML='🔒 Pagar Ahora — $'+t.toLocaleString(); }
+  // Always destroy and re-init Stripe card element
+  stripeCard=null; stripeInst=null;
+  document.getElementById('co-modal').classList.add('on');
   initStripe();
 }
 function closeCheckout(){document.getElementById('co-modal').classList.remove('on');stripeCard=null;stripeInst=null}
@@ -2873,9 +2898,11 @@ async function processPayment(){
     document.getElementById('pay-ok').style.display='block';
     const okMsg=document.getElementById('pay-ok-msg');
     if(okMsg) okMsg.innerHTML=
-      '<strong>¡Hola '+nombre+'!</strong> Tu pago fue procesado exitosamente.<br/>'+
-      'Te enviamos un correo a <strong>'+email+'</strong> con tu contraseña y enlace de activación.<br/>'+
-      '<small style="color:var(--muted)">Revisa también tu carpeta de spam si no lo ves en 5 minutos.</small>';
+      '👋 <strong>¡Hola '+nombre+' '+apellido+'!</strong><br/><br/>'+
+      '✅ Tu pago fue procesado exitosamente.<br/>'+
+      '📧 Enviamos un correo de bienvenida a <strong>'+email+'</strong><br/>'+
+      'con tu contraseña temporal y el enlace para activar tu cuenta.<br/><br/>'+
+      '<span style="color:#166534;font-size:.8rem">⏱ Si no recibes el correo en 5 minutos, revisa tu carpeta de <strong>spam / correo no deseado</strong>.</span>';
     cart=[]; updateCartUI();
 
   }catch(ex){
