@@ -404,6 +404,12 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
   .courses-grid,.adv-grid,.res-grid,.vals,.hero-stats,.temario-grid,.price-grid,.frow{grid-template-columns:1fr}
 }
 .nosel{user-select:none;-webkit-user-select:none}
+    /* ── CHANGE PASSWORD MODAL ── */
+    .pw-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99990;display:none;align-items:center;justify-content:center}
+    .pw-modal-overlay.on{display:flex}
+    .pw-modal{background:var(--white);border-radius:14px;padding:2rem;width:100%;max-width:400px;box-shadow:0 25px 50px rgba(0,0,0,.25)}
+    .pw-modal h4{font-family:"Bebas Neue",sans-serif;font-size:1.3rem;color:var(--navy);margin-bottom:1rem}
+
     /* ── SKELETON LOADING ── */
     .cc-skeleton{background:var(--off);border-radius:var(--r);overflow:hidden;animation:sk-pulse 1.4s ease-in-out infinite}
     .sk-block{background:linear-gradient(90deg,#e8edf4 25%,#d8dfe8 50%,#e8edf4 75%);background-size:200% 100%;animation:sk-shine 1.4s ease-in-out infinite;border-radius:6px}
@@ -1132,10 +1138,13 @@ footer{background:var(--navy);color:rgba(255,255,255,.7);padding:3rem 2rem 1.5re
         </button>
       </div>
       <div class="pay-ok" id="pay-ok" style="display:none">
-        <div class="ok-ico">🎉</div>
-        <h3>¡Pago Exitoso!</h3>
-        <div id="pay-ok-msg" style="font-size:.88rem;line-height:1.6;margin:.75rem 0 1.2rem;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:1rem;text-align:left"></div>
-        <button class="btn-primary" onclick="closeCheckout()" style="margin:0 auto">Cerrar y continuar</button>
+        <div style="text-align:center;margin-bottom:1rem">
+          <img src="data:image/png;base64,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" alt="Evolution Prime Group" style="height:72px;width:72px;object-fit:contain;border-radius:50%;background:var(--navy);padding:6px"/>
+        </div>
+        <h3 style="color:var(--navy);font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:.5px;text-align:center;margin-bottom:.25rem">¡Pago Exitoso!</h3>
+        <p style="text-align:center;font-size:.82rem;color:var(--muted);margin-bottom:.9rem">Bienvenido a Evolution Prime Group</p>
+        <div id="pay-ok-msg" style="font-size:.85rem;line-height:1.7;margin:.5rem 0 1.2rem;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:1rem 1.2rem;text-align:left"></div>
+        <button class="btn-primary" onclick="closeCheckoutAndReset()" style="margin:0 auto;display:block">Cerrar y continuar</button>
       </div>
     </div>
   </div>
@@ -1986,6 +1995,64 @@ async function saveEmailConfig(){
   }
 }
 
+
+// ================================================================
+// CHANGE PASSWORD MODAL
+// ================================================================
+var _pwTargetEmail = '';
+
+function openChangePasswordModal(email){
+  _pwTargetEmail = email;
+  const overlay = document.getElementById('pw-modal-overlay');
+  const emailEl = document.getElementById('pw-modal-email');
+  if(overlay) overlay.classList.add('on');
+  if(emailEl) emailEl.textContent = '👤 ' + email;
+  const np = document.getElementById('pw-new');
+  const cp = document.getElementById('pw-confirm');
+  const er = document.getElementById('pw-modal-err');
+  if(np) np.value=''; if(cp) cp.value=''; if(er) er.style.display='none';
+  setTimeout(()=>{ const f=document.getElementById('pw-new'); if(f)f.focus(); },80);
+}
+
+function closeChangePasswordModal(){
+  document.getElementById('pw-modal-overlay').classList.remove('on');
+  _pwTargetEmail='';
+}
+
+async function submitChangePassword(){
+  const newPass    = (document.getElementById('pw-new')?.value||'').trim();
+  const confirmPass= (document.getElementById('pw-confirm')?.value||'').trim();
+  const errEl      = document.getElementById('pw-modal-err');
+  errEl.style.display='none';
+
+  if(!newPass || newPass.length < 8){
+    errEl.textContent='La contraseña debe tener mínimo 8 caracteres.'; errEl.style.display='block'; return;
+  }
+  if(newPass !== confirmPass){
+    errEl.textContent='Las contraseñas no coinciden.'; errEl.style.display='block'; return;
+  }
+  if(!_pwTargetEmail || !SCRIPT_URL){ errEl.textContent='Error: sin objetivo.'; errEl.style.display='block'; return; }
+
+  try{
+    const r = await callAppsScript({
+      action:'changePassword', targetEmail:_pwTargetEmail, newPassword:newPass
+    });
+    if(r && r.success){
+      closeChangePasswordModal();
+      toast('✅ Contraseña actualizada para ' + _pwTargetEmail);
+    } else {
+      errEl.textContent = (r?.error)||'Error al cambiar contraseña.'; errEl.style.display='block';
+    }
+  }catch(e){
+    errEl.textContent='Error: '+e.message; errEl.style.display='block';
+  }
+}
+
+// Close modal on overlay click
+document.addEventListener('click', function(e){
+  if(e.target.id==='pw-modal-overlay') closeChangePasswordModal();
+});
+
 // ── CONNECTION TEST ──
 function testConnection() {
   // Show result in a toast + a dedicated status div in the admin panel
@@ -2758,13 +2825,39 @@ function openCheckout(){
   const er=document.getElementById('pay-err'); if(er) er.style.display='none';
   const se=document.getElementById('stripe-err'); if(se) se.textContent='';
   const btn=document.getElementById('btn-pay');
-  if(btn){ btn.disabled=false; btn.innerHTML='🔒 Pagar Ahora — $'+t.toLocaleString(); }
+  if(btn){ btn.disabled=false; btn.innerHTML='🔒 Pagar Ahora &nbsp; $'+t.toLocaleString(); }
   // Always destroy and re-init Stripe card element
   stripeCard=null; stripeInst=null;
+  const stripeEl=document.getElementById('stripe-el');
+  if(stripeEl) stripeEl.innerHTML=''; // clear mounted card
   document.getElementById('co-modal').classList.add('on');
   initStripe();
 }
-function closeCheckout(){document.getElementById('co-modal').classList.remove('on');stripeCard=null;stripeInst=null}
+function closeCheckout(){
+  document.getElementById('co-modal').classList.remove('on');
+  stripeCard=null; stripeInst=null;
+}
+
+function closeCheckoutAndReset(){
+  // Full reset so next purchase works immediately
+  document.getElementById('co-modal').classList.remove('on');
+  stripeCard=null; stripeInst=null;
+  // Reset pay-ok to hidden, co-content to visible for next time
+  const payOk = document.getElementById('pay-ok');
+  const coCont = document.getElementById('co-content');
+  if(payOk) payOk.style.display='none';
+  if(coCont) coCont.style.display='block';
+  // Clear form fields
+  ['pay-n','pay-a','pay-e','pay-t'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  const er=document.getElementById('pay-err'); if(er) er.style.display='none';
+  const se=document.getElementById('stripe-err'); if(se) se.textContent='';
+  const btn=document.getElementById('btn-pay');
+  if(btn){ btn.disabled=false; btn.textContent='🔒 Pagar Ahora'; }
+  // Also reset the pay-ok-msg
+  const msg=document.getElementById('pay-ok-msg'); if(msg) msg.innerHTML='';
+}
 
 function initStripe(){
   const pk=stripePK;
@@ -3073,20 +3166,27 @@ async function loadUsers(){
     const d=await callAppsScript({action:'getUsers'})||{};
     if(d.code==='UNAUTHORIZED'){ w.innerHTML='<p class="empty-adm">⚠️ Sesión expirada. Vuelve a iniciar sesión.</p>'; return; }
     if(!d.users||!d.users.length){ w.innerHTML='<p class="empty-adm">No hay usuarios registrados.</p>'; return; }
-    w.innerHTML=`<div style="overflow-x:auto"><table class="user-table">
-      <thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Cursos</th><th>Acciones</th></tr></thead>
-      <tbody>${d.users.map(u=>`
-        <tr>
-          <td style="font-weight:700">${u.name||''}</td>
-          <td style="font-family:monospace;font-size:.78rem">${u.email||''}</td>
-          <td><span class="badge-${u.role==='admin'?'admin':'student'}">${u.role==='admin'?'Admin':'Estudiante'}</span></td>
-          <td style="font-size:.75rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${u.courses||''}">${u.courses||'—'}</td>
-          <td style="white-space:nowrap;display:flex;gap:.3rem">
-            <button class="btn-icon" data-email="${u.email}" data-name="${(u.name||'').replace(/"/g,'&quot;')}" data-role="${u.role}" data-courses="${(u.courses||'').replace(/"/g,'&quot;')}" onclick="editUserBtn(this)">✏️</button>
-            <button class="btn-icon danger" data-email="${u.email}" onclick="deleteUserBtn(this)">🗑️</button>
-          </td>
-        </tr>`).join('')}
-      </tbody></table></div>`;
+    w.innerHTML='<div style="overflow-x:auto"><table class="user-table">'
+      + '<thead><tr><th>Nombre</th><th>Correo</th><th>Estado</th><th>Rol</th><th>Cursos</th><th>Estudiante</th><th>Acciones</th></tr></thead>'
+      + '<tbody>' + (d.users||[]).map(function(u){
+          var statusBadge = u.status==='active'
+            ? '<span style="background:#dcfce7;color:#166534;font-size:.65rem;font-weight:800;padding:2px 8px;border-radius:20px">✅ Activo</span>'
+            : '<span style="background:#fff7ed;color:#c2410c;font-size:.65rem;font-weight:800;padding:2px 8px;border-radius:20px">⏳ Pendiente</span>';
+          return '<tr>'
+            + '<td style="font-weight:700">' + (u.name||'') + '</td>'
+            + '<td style="font-family:monospace;font-size:.75rem">' + (u.email||'') + '</td>'
+            + '<td>' + statusBadge + '</td>'
+            + '<td><span class="badge-' + (u.role==='admin'?'admin':'student') + '">' + (u.role==='admin'?'Admin':'Estudiante') + '</span></td>'
+            + '<td style="font-size:.72rem;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + (u.courses||'') + '">' + (u.courses||'—') + '</td>'
+            + '<td style="font-size:.72rem">' + (u.linked_student ? '<span style="color:#166534">✅ Vinculado</span>' : '<span style="color:#c2410c">—</span>') + '</td>'
+            + '<td style="white-space:nowrap;display:flex;gap:.25rem">'
+            + '<button class="btn-icon" title="Editar" data-email="' + (u.email||'') + '" data-name="' + (u.name||'').replace(/"/g,'&quot;') + '" data-role="' + (u.role||'') + '" data-courses="' + (u.courses||'').replace(/"/g,'&quot;') + '" onclick="editUserBtn(this)">✏️</button>'
+            + '<button class="btn-icon" title="Cambiar contraseña" data-email="' + (u.email||'') + '" onclick="openChangePasswordModal(this.dataset.email)">🔑</button>'
+            + '<button class="btn-icon danger" title="Eliminar" data-email="' + (u.email||'') + '" onclick="deleteUserBtn(this)">🗑️</button>'
+            + '</td>'
+            + '</tr>';
+        }).join('')
+      + '</tbody></table></div>';
   }catch(e){
     w.innerHTML=`<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:.9rem;font-size:.82rem;color:#991b1b">❌ Error: ${e.message}<br/><small>Verifica que el Apps Script tenga soporte JSONP y esté publicado.</small></div>`;
   }
@@ -3859,5 +3959,27 @@ document.getElementById('portal').addEventListener('contextmenu',e=>e.preventDef
   });
 })();
 </script>
+
+<!-- ══════ CHANGE PASSWORD MODAL ══════ -->
+<div class="pw-modal-overlay" id="pw-modal-overlay">
+  <div class="pw-modal">
+    <h4>🔑 Cambiar Contraseña</h4>
+    <p id="pw-modal-email" style="font-size:.82rem;color:var(--muted);margin-bottom:1rem;font-family:monospace"></p>
+    <div class="cf-group">
+      <label>Nueva contraseña *</label>
+      <input type="password" id="pw-new" placeholder="Mínimo 8 caracteres" autocomplete="new-password"/>
+    </div>
+    <div class="cf-group">
+      <label>Confirmar contraseña *</label>
+      <input type="password" id="pw-confirm" placeholder="Repite la contraseña"/>
+    </div>
+    <div id="pw-modal-err" style="display:none;color:#991b1b;font-size:.78rem;margin:.4rem 0;background:#fef2f2;padding:8px 12px;border-radius:6px"></div>
+    <div style="display:flex;gap:.5rem;margin-top:1rem">
+      <button class="btn-sm orange" onclick="submitChangePassword()">💾 Guardar</button>
+      <button class="btn-sm ghost" onclick="closeChangePasswordModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
